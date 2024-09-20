@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using PropertyPilot.Dal.Models;
 
 namespace PropertyPilot.Dal.Contexts;
 
@@ -11,5 +12,5 @@ public class PmsDbContext(IConfiguration configuration) : DbContext
         optionsBuilder.UseNpgsql(configuration.GetConnectionString("pms"));
     }
 
-
+    DbSet<PropertyListing> PropertyListings { get; set; }
 }
