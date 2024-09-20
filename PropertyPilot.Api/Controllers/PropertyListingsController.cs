@@ -13,14 +13,16 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
     [HttpGet]
     public async Task<List<PropertyListing>> GetAllPropertyListings()
     {
-        List<PropertyListing> listings = await propertyListingService.GetAllPropertyListings();
+        List<PropertyListing> listings = await propertyListingService.GetAllPropertyListingsAsync();
         return listings;
     }
 
     [HttpGet("{id}")]
-    public string Get(int id)
+    public async Task<ActionResult<PropertyListing?>> GetPropertyListingById(Guid id)
     {
-        return "value";
+        PropertyListing? listing = await propertyListingService.GetPropertyListingByIdAsync(id);
+
+        return Ok(listing ?? null);
     }
 
     [HttpPost]
