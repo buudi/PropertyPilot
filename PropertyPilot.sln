@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35208.52
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyPilot.Api", "PropertyPilot.Api\PropertyPilot.Api.csproj", "{8DCF3247-1375-466F-8A43-04C501B8743C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PropertyPilot.Api", "PropertyPilot.Api\PropertyPilot.Api.csproj", "{8DCF3247-1375-466F-8A43-04C501B8743C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyPilot.Dal", "PropertyPilot.Dal\PropertyPilot.Dal.csproj", "{64CCF346-EC20-4077-89C3-B9CD4D2DF803}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{8DCF3247-1375-466F-8A43-04C501B8743C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8DCF3247-1375-466F-8A43-04C501B8743C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8DCF3247-1375-466F-8A43-04C501B8743C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64CCF346-EC20-4077-89C3-B9CD4D2DF803}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64CCF346-EC20-4077-89C3-B9CD4D2DF803}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64CCF346-EC20-4077-89C3-B9CD4D2DF803}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64CCF346-EC20-4077-89C3-B9CD4D2DF803}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
