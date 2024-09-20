@@ -37,8 +37,11 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
     }
 
     [HttpPut("{id}")]
-    public void Put(int id, [FromBody] string value)
+    public async Task<ActionResult> UpdatePropertyListingAsync(Guid id, [FromBody] UpdatePropertyListingRequest request)
     {
+        await propertyListingService.UpdatePropertyListingAsync(id, request);
+
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
