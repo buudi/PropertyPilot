@@ -1,16 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Api.Services.PropertyListingServices;
+using PropertyPilot.Dal.Models;
 
 
 namespace PropertyPilot.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class PropertyListingsController : ControllerBase
+public class PropertyListingsController(PropertyListingService propertyListingService) : ControllerBase
 {
     [HttpGet]
-    public IEnumerable<string> Get()
+    public async Task<List<PropertyListing>> GetAllPropertyListings()
     {
-        return new string[] { "value1", "value2" };
+        List<PropertyListing> listings = await propertyListingService.GetAllPropertyListings();
+        return listings;
     }
 
     [HttpGet("{id}")]

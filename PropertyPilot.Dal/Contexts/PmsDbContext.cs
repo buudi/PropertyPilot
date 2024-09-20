@@ -12,5 +12,5 @@ public class PmsDbContext(IConfiguration configuration) : DbContext
         optionsBuilder.UseNpgsql(configuration.GetConnectionString("pms"));
     }
 
-    DbSet<PropertyListing> PropertyListings { get; set; }
+    public DbSet<PropertyListing> PropertyListings { get; set; }
 }

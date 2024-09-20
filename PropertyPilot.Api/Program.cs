@@ -1,3 +1,4 @@
+using PropertyPilot.Api.Services.PropertyListingServices;
 using PropertyPilot.Dal.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<PmsDbContext>();
+
+builder.Services.AddScoped<PropertyListingService>();
 
 var app = builder.Build();
 
