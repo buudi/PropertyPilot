@@ -11,14 +11,14 @@ namespace PropertyPilot.Api.Controllers;
 public class PropertyListingsController(PropertyListingService propertyListingService) : ControllerBase
 {
     [HttpGet]
-    public async Task<List<PropertyListing>> GetAllPropertyListings()
+    public async Task<List<PropertyListing>> GetAllPropertyListingsAsync()
     {
         List<PropertyListing> listings = await propertyListingService.GetAllPropertyListingsAsync();
         return listings;
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<PropertyListing?>> GetPropertyListingById(Guid id)
+    public async Task<ActionResult<PropertyListing?>> GetPropertyListingByIdAsync(Guid id)
     {
         PropertyListing? listing = await propertyListingService.GetPropertyListingByIdAsync(id);
 
@@ -31,7 +31,7 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
         PropertyListing newPropertyListing = propertyListingService.CreatePropertyListing(createListingrequest);
 
         return CreatedAtAction(
-            nameof(GetPropertyListingById),
+            nameof(GetPropertyListingByIdAsync),
             new { id = newPropertyListing.Id },
             newPropertyListing);
     }
