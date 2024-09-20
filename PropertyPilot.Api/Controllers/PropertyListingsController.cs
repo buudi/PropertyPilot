@@ -30,7 +30,10 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
     {
         PropertyListing newPropertyListing = propertyListingService.CreatePropertyListing(createListingrequest);
 
-        return Ok(newPropertyListing);
+        return CreatedAtAction(
+            nameof(GetPropertyListingById),
+            new { id = newPropertyListing.Id },
+            newPropertyListing);
     }
 
     [HttpPut("{id}")]
