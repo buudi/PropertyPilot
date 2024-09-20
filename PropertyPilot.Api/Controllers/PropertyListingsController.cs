@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Api.Services.PropertyListingServices;
+using PropertyPilot.Api.Services.PropertyListingServices.Models;
 using PropertyPilot.Dal.Models;
 
 
@@ -23,8 +24,11 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
     }
 
     [HttpPost]
-    public void Post([FromBody] string value)
+    public ActionResult<PropertyListing> CreatePropertyListing([FromBody] CreatePropertyListingRequest createListingrequest)
     {
+        PropertyListing newPropertyListing = propertyListingService.CreatePropertyListing(createListingrequest);
+
+        return Ok(newPropertyListing);
     }
 
     [HttpPut("{id}")]
