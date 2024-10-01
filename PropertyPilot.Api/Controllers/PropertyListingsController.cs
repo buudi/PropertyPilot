@@ -17,12 +17,17 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
         return listings;
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<PropertyListing?>> GetPropertyListingByIdAsync(Guid id)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<PropertyListing?>> GetPropertyListingById(Guid id)
     {
         PropertyListing? listing = await propertyListingService.GetPropertyListingByIdAsync(id);
 
-        return Ok(listing ?? null);
+        if (listing == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(listing);
     }
 
     [HttpPost]
@@ -31,7 +36,7 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
         PropertyListing newPropertyListing = propertyListingService.CreatePropertyListing(createListingrequest);
 
         return CreatedAtAction(
-            nameof(GetPropertyListingByIdAsync),
+            nameof(GetPropertyListingById),
             new { id = newPropertyListing.Id },
             newPropertyListing);
     }
