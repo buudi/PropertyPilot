@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace PropertyPilot.Dal.Models;
 
 [Table(nameof(PropertyPilotUser))]
-class PropertyPilotUser
+public class PropertyPilotUser
 {
     public static class UserRoles
     {
