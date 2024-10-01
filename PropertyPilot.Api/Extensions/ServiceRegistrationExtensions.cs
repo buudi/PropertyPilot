@@ -1,5 +1,5 @@
-﻿using PropertyPilot.Api.Services.PropertyListingServices;
-using PropertyPilot.Dal.Contexts;
+﻿using PropertyPilot.Dal.Contexts;
+using PropertyPilot.Services.PropertyListingServices;
 
 namespace PropertyPilot.Api.Extensions;
 

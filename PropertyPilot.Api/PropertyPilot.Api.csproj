@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PropertyPilot.Dal\PropertyPilot.Dal.csproj" />
+    <ProjectReference Include="..\PropertyPilot.Services\PropertyPilot.Services.csproj" />
   </ItemGroup>
 
 </Project>

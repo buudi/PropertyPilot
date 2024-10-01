@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PropertyPilot.Api.Services.PropertyListingServices.Models;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.PropertyListingServices.Models;
 
-namespace PropertyPilot.Api.Services.PropertyListingServices;
+namespace PropertyPilot.Services.PropertyListingServices;
 
 public class PropertyListingService(PmsDbContext pmsDbContext)
 {

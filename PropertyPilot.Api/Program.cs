@@ -11,10 +11,6 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddPropertyPilotServices();
 
-//builder.Services.AddDbContext<PmsDbContext>();
-
-//builder.Services.AddScoped<PropertyListingService>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
