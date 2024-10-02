@@ -9,6 +9,13 @@ namespace PropertyPilot.Api.Controllers.UsersController;
 [ApiController]
 public class UsersController(UserService userService) : ControllerBase
 {
+    [HttpGet]
+    public async Task<ActionResult<List<PropertyPilotUser>>> GetAllUsers()
+    {
+        var users = await userService.GetAllUsersAsync();
+        return users;
+    }
+
     [HttpPost]
     public ActionResult<PropertyPilotUser> CreateUser(CreateUserRequest request)
     {
