@@ -20,10 +20,11 @@ public class UserService(PmsDbContext pmsDbContext)
             Name = request.Name,
             Email = request.Email,
             Role = request.Role,
-            HashedPassword = request.HashedPassword
+            HashedPassword = request.Password
         };
 
         var user = pmsDbContext.PropertyPilotUsers.Add(newUser);
+        pmsDbContext.SaveChanges();
 
         return user.Entity;
     }

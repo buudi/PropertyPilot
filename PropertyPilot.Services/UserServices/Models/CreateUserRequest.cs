@@ -5,5 +5,5 @@ namespace PropertyPilot.Services.UserServices.Models;
 public class CreateUserRequest : BaseUserRequest
 {
     [Required]
-    public string HashedPassword { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }
