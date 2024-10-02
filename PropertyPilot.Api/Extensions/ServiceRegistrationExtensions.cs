@@ -1,5 +1,6 @@
 ﻿using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Services.PropertyListingServices;
+using PropertyPilot.Services.UserServices;
 
 namespace PropertyPilot.Api.Extensions;
 
@@ -10,5 +11,6 @@ public static class ServiceRegistrationExtensions
         services.AddDbContext<PmsDbContext>();
 
         services.AddScoped<PropertyListingService>();
+        services.AddScoped<UserService>();
     }
 }
