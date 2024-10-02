@@ -36,4 +36,17 @@ public class UserService(PmsDbContext pmsDbContext)
 
         return user.Entity;
     }
+
+    public void UpdateUser(Guid id, UpdateUserRequest request)
+    {
+        var userToUpdate = pmsDbContext.PropertyPilotUsers
+            .Where(x => x.Id == id)
+            .FirstOrDefault();
+
+        if (userToUpdate != null)
+        {
+            userToUpdate.Name = request.Name;
+            userToUpdate.Email = request.Email;
+        }
+    }
 }
