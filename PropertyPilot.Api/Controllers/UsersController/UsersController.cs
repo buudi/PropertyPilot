@@ -39,4 +39,15 @@ public class UsersController(UserService userService) : ControllerBase
             new { id = createdUser.Id },
             createdUser);
     }
+
+    /// <summary>
+    /// Updates user Email and Name
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    public IActionResult UpdateUser(Guid id, UpdateUserRequest request)
+    {
+        userService.UpdateUser(id, request);
+
+        return NoContent();
+    }
 }
