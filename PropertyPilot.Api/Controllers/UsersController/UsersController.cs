@@ -16,11 +16,27 @@ public class UsersController(UserService userService) : ControllerBase
         return users;
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<PropertyPilotUser>> GetUserById(Guid id)
+    {
+        var user = await userService.GetUserById(id);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(user);
+    }
+
     [HttpPost]
     public ActionResult<PropertyPilotUser> CreateUser(CreateUserRequest request)
     {
         var createdUser = userService.CreateUser(request);
 
-        return createdUser;
+        return CreatedAtAction(
+            nameof(GetUserById),
+            new { id = createdUser.Id },
+            createdUser);
     }
 }

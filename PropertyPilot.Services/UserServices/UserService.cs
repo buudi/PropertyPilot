@@ -13,6 +13,14 @@ public class UserService(PmsDbContext pmsDbContext)
         return users;
     }
 
+    public async Task<PropertyPilotUser?> GetUserById(Guid id)
+    {
+        return await pmsDbContext.PropertyPilotUsers
+            .Where(x => x.Id == id)
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+    }
+
     public PropertyPilotUser CreateUser(CreateUserRequest request)
     {
         var newUser = new PropertyPilotUser
