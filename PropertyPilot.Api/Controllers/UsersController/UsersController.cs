@@ -5,10 +5,18 @@ using PropertyPilot.Services.UserServices.Models;
 
 namespace PropertyPilot.Api.Controllers.UsersController;
 
+
+/// <summary>
+/// PropertyPilot Users API
+/// </summary>
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController(UserService userService) : ControllerBase
 {
+    /// <summary>
+    /// Get all PropertyPilot users
+    /// </summary>
+    /// <returns>List of all PropertyPilot users.</returns>
     [HttpGet]
     public async Task<ActionResult<List<PropertyPilotUser>>> GetAllUsers()
     {
@@ -16,6 +24,10 @@ public class UsersController(UserService userService) : ControllerBase
         return users;
     }
 
+    /// <summary>
+    /// Get PropertyPilot user by Id
+    /// </summary>
+    /// <returns>PropertyPilot user object.</returns>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<PropertyPilotUser>> GetUserById(Guid id)
     {
@@ -29,6 +41,11 @@ public class UsersController(UserService userService) : ControllerBase
         return Ok(user);
     }
 
+    /// <summary>
+    /// Create PropertyPilot user
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>Created PropertyPilot User</returns>
     [HttpPost]
     public ActionResult<PropertyPilotUser> CreateUser(CreateUserRequest request)
     {
