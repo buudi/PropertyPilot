@@ -3,7 +3,6 @@ using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.PropertyListingServices;
 using PropertyPilot.Services.PropertyListingServices.Models;
 
-
 namespace PropertyPilot.Api.Controllers;
 
 [Route("api/[controller]")]

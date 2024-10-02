@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PropertyPilot.Dal\PropertyPilot.Dal.csproj" />
-	<ProjectReference Include="..\PropertyPilot.Api\PropertyPilot.Api.csproj"  />
   </ItemGroup>
 
 </Project>

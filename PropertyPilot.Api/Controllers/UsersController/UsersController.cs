@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PropertyPilot.Api.Controllers.UsersController.Models;
 using PropertyPilot.Dal.Models;
-using PropertyPilot.Services.UserServices;
 
 namespace PropertyPilot.Api.Controllers.UsersController;
 

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace PropertyPilot.Api.Controllers.UsersController.Models;
+namespace PropertyPilot.Services.UserServices.Models;
 
 public class BaseUserRequest
 {
