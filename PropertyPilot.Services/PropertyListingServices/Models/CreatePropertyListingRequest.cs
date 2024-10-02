@@ -1,4 +1,4 @@
-﻿namespace PropertyPilot.Api.Services.PropertyListingServices.Models;
+﻿namespace PropertyPilot.Services.PropertyListingServices.Models;
 
 public record CreatePropertyListingRequest : BasePropertyListingRequest
 {

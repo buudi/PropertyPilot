@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PropertyPilot.Api.Services.PropertyListingServices;
-using PropertyPilot.Api.Services.PropertyListingServices.Models;
 using PropertyPilot.Dal.Models;
-
+using PropertyPilot.Services.PropertyListingServices;
+using PropertyPilot.Services.PropertyListingServices.Models;
 
 namespace PropertyPilot.Api.Controllers;
 
