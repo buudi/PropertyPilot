@@ -41,7 +41,7 @@ public class PropertyPilotUser
 
     public DateTime? DateArchived { get; set; } = null;
 
-    public string RefreshToken { get; set; } = string.Empty;
+    public string? RefreshToken { get; set; } = string.Empty;
 
     public DateTime? RefreshTokenExpiryTime { get; set; } = null;
 }
