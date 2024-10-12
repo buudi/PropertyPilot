@@ -13,8 +13,9 @@ namespace PropertyPilot.Api.Controllers.AuthsController;
 
 public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : ControllerBase
 {
-    [HttpPost("signup")]
-    public IActionResult SignUp([FromBody] SignUpModel model)
+
+    [HttpPost("signups/admin-manager")]
+    public IActionResult CreateAdminManagerAccount([FromBody] SignUpModel model)
     {
         if (pmsDbContext.PropertyPilotUsers.Any(u => u.Email == model.Email))
         {
@@ -26,13 +27,57 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
             Name = model.Name,
             Email = model.Email,
             HashedPassword = HashPassword(model.Password),
-            Role = PropertyPilotUser.UserRoles.Caretaker // Default role, change as needed
+            Role = PropertyPilotUser.UserRoles.AdminManager
         };
 
         pmsDbContext.PropertyPilotUsers.Add(user);
         pmsDbContext.SaveChanges();
 
-        return Ok("User created successfully");
+        return Ok("Admin Manager account created successfully");
+    }
+
+    [HttpPost("signups/manager")]
+    public IActionResult CreateManagerAccount([FromBody] SignUpModel model)
+    {
+        if (pmsDbContext.PropertyPilotUsers.Any(u => u.Email == model.Email))
+        {
+            return BadRequest("User with this email already exists");
+        }
+
+        var user = new PropertyPilotUser
+        {
+            Name = model.Name,
+            Email = model.Email,
+            HashedPassword = HashPassword(model.Password),
+            Role = PropertyPilotUser.UserRoles.Manager
+        };
+
+        pmsDbContext.PropertyPilotUsers.Add(user);
+        pmsDbContext.SaveChanges();
+
+        return Ok("Admin Manager account created successfully");
+    }
+
+    [HttpPost("signups/caretaker")]
+    public IActionResult CreateCaretakerAccount([FromBody] SignUpModel model)
+    {
+        if (pmsDbContext.PropertyPilotUsers.Any(u => u.Email == model.Email))
+        {
+            return BadRequest("User with this email already exists");
+        }
+
+        var user = new PropertyPilotUser
+        {
+            Name = model.Name,
+            Email = model.Email,
+            HashedPassword = HashPassword(model.Password),
+            Role = PropertyPilotUser.UserRoles.Caretaker
+        };
+
+        pmsDbContext.PropertyPilotUsers.Add(user);
+        pmsDbContext.SaveChanges();
+
+        return Ok("Caretaker account created successfully");
     }
 
     [HttpPost("login")]
@@ -49,7 +94,7 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
         var refreshToken = jwtService.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         pmsDbContext.SaveChanges();
 
         return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
