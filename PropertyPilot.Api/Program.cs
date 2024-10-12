@@ -1,4 +1,5 @@
 using PropertyPilot.Api.Extensions;
+using PropertyPilot.Dal.Contexts;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173");
     });
 });
+
+builder.Services.AddDbContext<PmsDbContext>();
 
 builder.Services.AddPropertyPilotServices();
 
