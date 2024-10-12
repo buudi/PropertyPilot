@@ -1,4 +1,5 @@
-﻿using PropertyPilot.Services.PropertyListingServices;
+﻿using PropertyPilot.Services.JwtServices;
+using PropertyPilot.Services.PropertyListingServices;
 using PropertyPilot.Services.UserServices;
 
 namespace PropertyPilot.Api.Extensions;
@@ -9,5 +10,6 @@ public static class ServiceRegistrationExtensions
     {
         services.AddScoped<PropertyListingService>();
         services.AddScoped<UserService>();
+        services.AddScoped<JwtService>();
     }
 }
