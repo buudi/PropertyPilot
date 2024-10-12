@@ -11,12 +11,12 @@ namespace PropertyPilot.Api.Controllers.AuthsController;
 [ApiController]
 [Route("/api/[Controller]")]
 
-public class AuthController(PmsDbContext _context, JwtService _jwtService) : ControllerBase
+public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : ControllerBase
 {
     [HttpPost("signup")]
     public IActionResult SignUp([FromBody] SignUpModel model)
     {
-        if (_context.PropertyPilotUsers.Any(u => u.Email == model.Email))
+        if (pmsDbContext.PropertyPilotUsers.Any(u => u.Email == model.Email))
         {
             return BadRequest("User with this email already exists");
         }
@@ -29,8 +29,8 @@ public class AuthController(PmsDbContext _context, JwtService _jwtService) : Con
             Role = PropertyPilotUser.UserRoles.Caretaker // Default role, change as needed
         };
 
-        _context.PropertyPilotUsers.Add(user);
-        _context.SaveChanges();
+        pmsDbContext.PropertyPilotUsers.Add(user);
+        pmsDbContext.SaveChanges();
 
         return Ok("User created successfully");
     }
@@ -38,19 +38,19 @@ public class AuthController(PmsDbContext _context, JwtService _jwtService) : Con
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginModel model)
     {
-        var user = _context.PropertyPilotUsers.FirstOrDefault(u => u.Email == model.Email);
+        var user = pmsDbContext.PropertyPilotUsers.FirstOrDefault(u => u.Email == model.Email);
 
         if (user == null || !VerifyPassword(model.Password, user.HashedPassword))
         {
             return Unauthorized("Invalid email or password");
         }
 
-        var accessToken = _jwtService.GenerateAccessToken(user);
-        var refreshToken = _jwtService.GenerateRefreshToken();
+        var accessToken = jwtService.GenerateAccessToken(user);
+        var refreshToken = jwtService.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
-        _context.SaveChanges();
+        pmsDbContext.SaveChanges();
 
         return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
     }
@@ -66,21 +66,21 @@ public class AuthController(PmsDbContext _context, JwtService _jwtService) : Con
         string accessToken = model.AccessToken;
         string refreshToken = model.RefreshToken;
 
-        var principal = _jwtService.GetPrincipalFromExpiredToken(accessToken);
+        var principal = jwtService.GetPrincipalFromExpiredToken(accessToken);
         var username = principal.Identity.Name;
 
-        var user = _context.PropertyPilotUsers.SingleOrDefault(u => u.Email == username);
+        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == username);
 
         if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
         {
             return BadRequest("Invalid client request");
         }
 
-        var newAccessToken = _jwtService.GenerateAccessToken(user);
-        var newRefreshToken = _jwtService.GenerateRefreshToken();
+        var newAccessToken = jwtService.GenerateAccessToken(user);
+        var newRefreshToken = jwtService.GenerateRefreshToken();
 
         user.RefreshToken = newRefreshToken;
-        _context.SaveChanges();
+        pmsDbContext.SaveChanges();
 
         return Ok(new { AccessToken = newAccessToken, RefreshToken = newRefreshToken });
     }
@@ -90,11 +90,11 @@ public class AuthController(PmsDbContext _context, JwtService _jwtService) : Con
     public IActionResult RevokeToken()
     {
         var username = User.Identity.Name;
-        var user = _context.PropertyPilotUsers.SingleOrDefault(u => u.Email == username);
+        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == username);
         if (user == null) return BadRequest();
 
         user.RefreshToken = null;
-        _context.SaveChanges();
+        pmsDbContext.SaveChanges();
 
         return NoContent();
     }
