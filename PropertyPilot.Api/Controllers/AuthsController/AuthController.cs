@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.JwtServices;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -97,7 +98,12 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         pmsDbContext.SaveChanges();
 
-        return Ok(new { AccessToken = accessToken, RefreshToken = refreshToken });
+        return Ok(new
+        {
+            User = user,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
+        });
     }
 
     [HttpPost("refresh-token")]
@@ -112,9 +118,9 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
         string refreshToken = model.RefreshToken;
 
         var principal = jwtService.GetPrincipalFromExpiredToken(accessToken);
-        var username = principal.Identity.Name;
+        var email = principal.FindFirstValue(ClaimTypes.Email);
 
-        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == username);
+        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == email);
 
         if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
         {
@@ -134,11 +140,17 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
     [HttpPost("revoke-token")]
     public IActionResult RevokeToken()
     {
-        var username = User.Identity.Name;
-        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == username);
+        if (User.Identity is null)
+        {
+            return Unauthorized();
+        }
+
+        var email = User.Identity.Name;
+        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == email);
         if (user == null) return BadRequest();
 
         user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
         pmsDbContext.SaveChanges();
 
         return NoContent();
