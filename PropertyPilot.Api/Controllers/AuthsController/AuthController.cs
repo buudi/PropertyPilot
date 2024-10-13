@@ -86,9 +86,19 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
     {
         var user = pmsDbContext.PropertyPilotUsers.FirstOrDefault(u => u.Email == model.Email);
 
-        if (user == null || !VerifyPassword(model.Password, user.HashedPassword))
+        if (user == null)
         {
-            return Unauthorized("Invalid email or password");
+            return Unauthorized("User not found.");
+        }
+
+        if (!VerifyPassword(model.Password, user.HashedPassword))
+        {
+            return Unauthorized("Incorrect password.");
+        }
+
+        if (user.IsArchived)
+        {
+            return Unauthorized("User account is archived.");
         }
 
         var accessToken = jwtService.GenerateAccessToken(user);
