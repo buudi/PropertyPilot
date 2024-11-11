@@ -5,7 +5,7 @@ using PropertyPilot.Services.PropertyListingServices.Models;
 
 namespace PropertyPilot.Api.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/property-listings")]
 [ApiController]
 public class PropertyListingsController(PropertyListingService propertyListingService) : ControllerBase
 {
