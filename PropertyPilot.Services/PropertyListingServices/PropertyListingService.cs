@@ -5,26 +5,26 @@ using PropertyPilot.Services.PropertyListingServices.Models;
 
 namespace PropertyPilot.Services.PropertyListingServices;
 
-public class PropertyListingService(PmsDbContext pmsDbContext)
+public class PropertyListingService(PpDbContext ppDbContext)
 {
-    public async Task<List<PropertyListing>> GetAllPropertyListingsAsync()
+    public async Task<List<PropertiesList>> GetAllPropertyListingsAsync()
     {
-        List<PropertyListing> listings = await pmsDbContext.PropertyListings.AsNoTracking().ToListAsync();
+        List<PropertiesList> listings = await ppDbContext.PropertiesList.AsNoTracking().ToListAsync();
         return listings;
     }
 
-    public async Task<PropertyListing?> GetPropertyListingByIdAsync(Guid Id)
+    public async Task<PropertiesList?> GetPropertyListingByIdAsync(Guid Id)
     {
-        PropertyListing? listing = await pmsDbContext.PropertyListings
+        PropertiesList? listing = await ppDbContext.PropertiesList
             .Where(x => x.Id == Id)
             .FirstOrDefaultAsync();
 
         return listing;
     }
 
-    public PropertyListing CreatePropertyListing(CreatePropertyListingRequest createListingRequest)
+    public PropertiesList CreatePropertyListing(CreatePropertyListingRequest createListingRequest)
     {
-        var newListing = new PropertyListing
+        var newListing = new PropertiesList
         {
             PropertyName = createListingRequest.PropertyName,
             Emirate = createListingRequest.Emirate,
@@ -32,16 +32,16 @@ public class PropertyListingService(PmsDbContext pmsDbContext)
             UnitsCount = createListingRequest.UnitsCount
         };
 
-        pmsDbContext.PropertyListings.Add(newListing);
-        pmsDbContext.SaveChanges();
+        ppDbContext.PropertiesList.Add(newListing);
+        ppDbContext.SaveChanges();
 
         return newListing;
     }
 
     public async Task UpdatePropertyListingAsync(Guid id, UpdatePropertyListingRequest updatePropertyListingRequest)
     {
-        PropertyListing? existingListing = await pmsDbContext
-            .PropertyListings
+        PropertiesList? existingListing = await ppDbContext
+            .PropertiesList
             .FindAsync(id);
 
         if (existingListing == null)
@@ -54,6 +54,6 @@ public class PropertyListingService(PmsDbContext pmsDbContext)
         existingListing.PropertyType = updatePropertyListingRequest.PropertyType;
         existingListing.UnitsCount = updatePropertyListingRequest.UnitsCount;
 
-        await pmsDbContext.SaveChangesAsync();
+        await ppDbContext.SaveChangesAsync();
     }
 }

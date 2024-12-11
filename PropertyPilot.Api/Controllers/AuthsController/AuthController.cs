@@ -1,0 +1,202 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Dal.Contexts;
+using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.JwtServices;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+
+namespace PropertyPilot.Api.Controllers.AuthsController;
+
+[ApiController]
+[Route("/api/[Controller]")]
+
+public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : ControllerBase
+{
+
+    [HttpPost("signups/admin-manager")]
+    public IActionResult CreateAdminManagerAccount([FromBody] SignUpModel model)
+    {
+        if (pmsDbContext.PropertyPilotUsers.Any(u => u.Email == model.Email))
+        {
+            return BadRequest("User with this email already exists");
+        }
+
+        var user = new PropertyPilotUser
+        {
+            Name = model.Name,
+            Email = model.Email,
+            HashedPassword = HashPassword(model.Password),
+            Role = PropertyPilotUser.UserRoles.AdminManager
+        };
+
+        pmsDbContext.PropertyPilotUsers.Add(user);
+        pmsDbContext.SaveChanges();
+
+        return Ok("Admin Manager account created successfully");
+    }
+
+    [HttpPost("signups/manager")]
+    public IActionResult CreateManagerAccount([FromBody] SignUpModel model)
+    {
+        if (pmsDbContext.PropertyPilotUsers.Any(u => u.Email == model.Email))
+        {
+            return BadRequest("User with this email already exists");
+        }
+
+        var user = new PropertyPilotUser
+        {
+            Name = model.Name,
+            Email = model.Email,
+            HashedPassword = HashPassword(model.Password),
+            Role = PropertyPilotUser.UserRoles.Manager
+        };
+
+        pmsDbContext.PropertyPilotUsers.Add(user);
+        pmsDbContext.SaveChanges();
+
+        return Ok("Admin Manager account created successfully");
+    }
+
+    [HttpPost("signups/caretaker")]
+    public IActionResult CreateCaretakerAccount([FromBody] SignUpModel model)
+    {
+        if (pmsDbContext.PropertyPilotUsers.Any(u => u.Email == model.Email))
+        {
+            return BadRequest("User with this email already exists");
+        }
+
+        var user = new PropertyPilotUser
+        {
+            Name = model.Name,
+            Email = model.Email,
+            HashedPassword = HashPassword(model.Password),
+            Role = PropertyPilotUser.UserRoles.Caretaker
+        };
+
+        pmsDbContext.PropertyPilotUsers.Add(user);
+        pmsDbContext.SaveChanges();
+
+        return Ok("Caretaker account created successfully");
+    }
+
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginModel model)
+    {
+        var user = pmsDbContext.PropertyPilotUsers.FirstOrDefault(u => u.Email == model.Email);
+
+        if (user == null)
+        {
+            return Unauthorized("User not found.");
+        }
+
+        if (!VerifyPassword(model.Password, user.HashedPassword))
+        {
+            return Unauthorized("Incorrect password.");
+        }
+
+        if (user.IsArchived)
+        {
+            return Unauthorized("User account is archived.");
+        }
+
+        var accessToken = jwtService.GenerateAccessToken(user);
+        var refreshToken = jwtService.GenerateRefreshToken();
+
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        pmsDbContext.SaveChanges();
+
+        return Ok(new
+        {
+            User = user,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
+        });
+    }
+
+    [HttpPost("refresh-token")]
+    public IActionResult RefreshToken([FromBody] RefreshTokenModel model)
+    {
+        if (model is null)
+        {
+            return BadRequest("Invalid client request");
+        }
+
+        string accessToken = model.AccessToken;
+        string refreshToken = model.RefreshToken;
+
+        var principal = jwtService.GetPrincipalFromExpiredToken(accessToken);
+        var email = principal.FindFirstValue(ClaimTypes.Email);
+
+        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == email);
+
+        if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
+        {
+            return BadRequest("Invalid client request");
+        }
+
+        var newAccessToken = jwtService.GenerateAccessToken(user);
+        var newRefreshToken = jwtService.GenerateRefreshToken();
+
+        user.RefreshToken = newRefreshToken;
+        pmsDbContext.SaveChanges();
+
+        return Ok(new { AccessToken = newAccessToken, RefreshToken = newRefreshToken });
+    }
+
+    [Authorize]
+    [HttpPost("revoke-token")]
+    public IActionResult RevokeToken()
+    {
+        if (User.Identity is null)
+        {
+            return Unauthorized();
+        }
+
+        var email = User.Identity.Name;
+        var user = pmsDbContext.PropertyPilotUsers.SingleOrDefault(u => u.Email == email);
+        if (user == null) return BadRequest();
+
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+        pmsDbContext.SaveChanges();
+
+        return NoContent();
+    }
+
+    private string HashPassword(string password)
+    {
+        using (var sha256 = SHA256.Create())
+        {
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+        }
+    }
+
+    private bool VerifyPassword(string password, string hashedPassword)
+    {
+        return HashPassword(password) == hashedPassword;
+    }
+}
+
+public class SignUpModel
+{
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Password { get; set; }
+}
+
+public class LoginModel
+{
+    public string Email { get; set; }
+    public string Password { get; set; }
+}
+
+public class RefreshTokenModel
+{
+    public string AccessToken { get; set; }
+    public string RefreshToken { get; set; }
+}
+
