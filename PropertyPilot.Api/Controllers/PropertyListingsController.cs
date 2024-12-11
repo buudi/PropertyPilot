@@ -5,21 +5,34 @@ using PropertyPilot.Services.PropertyListingServices.Models;
 
 namespace PropertyPilot.Api.Controllers;
 
-[Route("api/property-listings")]
+/// <summary>
+/// 
+/// </summary>
+/// <param name="propertyListingService"></param>
+[Route("api/properties-list")]
 [ApiController]
-public class PropertyListingsController(PropertyListingService propertyListingService) : ControllerBase
+public class PropertiesListController(PropertyListingService propertyListingService) : ControllerBase
 {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
     [HttpGet]
-    public async Task<List<PropertyListing>> GetAllPropertyListingsAsync()
+    public async Task<List<PropertiesList>> GetAllPropertyListingsAsync()
     {
-        List<PropertyListing> listings = await propertyListingService.GetAllPropertyListingsAsync();
+        var listings = await propertyListingService.GetAllPropertyListingsAsync();
         return listings;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<PropertyListing?>> GetPropertyListingById(Guid id)
+    public async Task<ActionResult<PropertiesList?>> GetPropertyListingById(Guid id)
     {
-        PropertyListing? listing = await propertyListingService.GetPropertyListingByIdAsync(id);
+        var listing = await propertyListingService.GetPropertyListingByIdAsync(id);
 
         if (listing == null)
         {
@@ -29,10 +42,15 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
         return Ok(listing);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="createListingrequest"></param>
+    /// <returns></returns>
     [HttpPost]
-    public ActionResult<PropertyListing> CreatePropertyListing([FromBody] CreatePropertyListingRequest createListingrequest)
+    public ActionResult<PropertiesList> CreatePropertyListing([FromBody] CreatePropertyListingRequest createListingrequest)
     {
-        PropertyListing newPropertyListing = propertyListingService.CreatePropertyListing(createListingrequest);
+        var newPropertyListing = propertyListingService.CreatePropertyListing(createListingrequest);
 
         return CreatedAtAction(
             nameof(GetPropertyListingById),
@@ -40,6 +58,12 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
             newPropertyListing);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdatePropertyListingAsync(Guid id, [FromBody] UpdatePropertyListingRequest request)
     {
@@ -48,6 +72,10 @@ public class PropertyListingsController(PropertyListingService propertyListingSe
         return NoContent();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
     [HttpDelete("{id}")]
     public void Delete(int id)
     {

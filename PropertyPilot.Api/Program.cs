@@ -59,6 +59,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<PmsDbContext>();
+builder.Services.AddDbContext<PpDbContext>();
 builder.Services.AddPropertyPilotServices();
 
 // Add JWT Authentication
