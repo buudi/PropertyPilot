@@ -5,7 +5,7 @@ using PropertyPilot.Services.PropertyListingServices.Models;
 
 namespace PropertyPilot.Services.PropertyListingServices;
 
-public class PropertyListingService(PpDbContext ppDbContext)
+public class PropertiesListService(PpDbContext ppDbContext)
 {
     public async Task<List<PropertiesList>> GetAllPropertyListingsAsync()
     {

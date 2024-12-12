@@ -11,7 +11,7 @@ namespace PropertyPilot.Api.Controllers;
 /// <param name="propertyListingService"></param>
 [Route("api/properties-list")]
 [ApiController]
-public class PropertiesListController(PropertyListingService propertyListingService) : ControllerBase
+public class PropertiesListController(PropertiesListService propertyListingService) : ControllerBase
 {
     /// <summary>
     /// 
