@@ -20,14 +20,14 @@ public class PropertiesList
 
     [Column("property_name")]
     [Required]
-    public string PropertyName { get; set; } = string.Empty;
+    public required string PropertyName { get; set; }
 
     [Column("emirate")]
     public string? Emirate { get; set; }
 
     [Column("property_type")]
     [Required]
-    public string PropertyType { get; set; } = string.Empty;
+    public required string PropertyType { get; set; }
 
     [Column("units_count")]
     public int? UnitsCount { get; set; }
