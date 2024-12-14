@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace PropertyPilot.Services.PropertyListingServices.Models;
+namespace PropertyPilot.Services.PropertiesServices.Models;
 
-public record BasePropertyListingRequest
+public record BasePropertyRequest
 {
     [Required]
     public string PropertyName { get; init; } = string.Empty;

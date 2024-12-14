@@ -1,5 +1,5 @@
 ﻿using PropertyPilot.Services.JwtServices;
-using PropertyPilot.Services.PropertyListingServices;
+using PropertyPilot.Services.PropertiesServices;
 
 namespace PropertyPilot.Api.Extensions;
 

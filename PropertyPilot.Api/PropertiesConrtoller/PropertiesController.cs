@@ -1,0 +1,74 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.PropertiesServices;
+using PropertyPilot.Services.PropertiesServices.Models;
+
+namespace PropertyPilot.Api.PropertiesConrtoller;
+
+/// <summary>
+/// 
+/// </summary>
+/// <param name="propertiesService"></param>
+[Route("api/properties")]
+[ApiController]
+public class PropertiesController(PropertiesService propertiesService) : ControllerBase
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet]
+    public async Task<List<Property>> GetAllProperties()
+    {
+        var properties = await propertiesService.GetAllPropertyAsync();
+        return properties;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<Property?>> GetPropertyById(Guid id)
+    {
+        var properties = await propertiesService.GetPropertyByIdAsync(id);
+
+        if (properties == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(properties);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="createPropertyRequest"></param>
+    /// <returns></returns>
+    [HttpPost]
+    public ActionResult<Property> CreateProperty([FromBody] CreatePropertyRequest createPropertyRequest)
+    {
+        var newProperty = propertiesService.CreateProperty(createPropertyRequest);
+
+        return CreatedAtAction(
+            nameof(GetPropertyById),
+            new { id = newProperty.Id },
+            newProperty);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPut("{id}")]
+    public async Task<ActionResult> UpdatePropertyAsync(Guid id, [FromBody] UpdatePropertyRequest request)
+    {
+        await propertiesService.UpdatePropertyAsync(id, request);
+
+        return NoContent();
+    }
+}

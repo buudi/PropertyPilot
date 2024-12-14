@@ -9,7 +9,9 @@ public class PpDbContext(IConfiguration configuration) : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         // connects to postgres with the connection string from appsettings
-        optionsBuilder.UseNpgsql(configuration.GetConnectionString("propertypilot"), b => b.MigrationsAssembly("PropertyPilot.Api"))
+        optionsBuilder
+            .UseNpgsql(configuration.GetConnectionString("propertypilot"),
+                       builder => builder.MigrationsAssembly("PropertyPilot.Api"))
             .UseSnakeCaseNamingConvention();
     }
 
