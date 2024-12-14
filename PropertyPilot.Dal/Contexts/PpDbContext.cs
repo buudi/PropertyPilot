@@ -22,5 +22,26 @@ public class PpDbContext(IConfiguration configuration) : DbContext
         modelBuilder.Entity<Property>()
             .Property(p => p.CreatedOn)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        // required one-to-one relationship between Contract and Tenant
+        modelBuilder.Entity<Contract>()
+            .HasOne(c => c.Tenant)
+            .WithMany() // no back-navigation from Tenant to this Contract
+            .HasForeignKey(c => c.TenantId)
+            .IsRequired();
+
+        // required one-to-one relationship between Contract and Property
+        modelBuilder.Entity<Contract>()
+            .HasOne(c => c.Property)
+            .WithMany() // no back-navigation from Property to this Contract
+            .HasForeignKey(c => c.PropertyId)
+            .IsRequired();
+
+        // optional one-to-one relationship between Tenant and CurrentContract
+        modelBuilder.Entity<Tenant>()
+            .HasOne(t => t.CurrentContract)
+            .WithOne()
+            .HasForeignKey<Tenant>(t => t.CurrentContractId)
+            .IsRequired(false);
     }
 }

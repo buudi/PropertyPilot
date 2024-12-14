@@ -12,9 +12,15 @@ public class Contract
     public Guid Id { get; set; }
 
     [Required]
+    public Guid TenantId { get; set; } // Foreign key for Tenant 
+
+    [ForeignKey(nameof(TenantId))]
     public required Tenant Tenant { get; set; }
 
     [Required]
+    public Guid PropertyId { get; set; } // Foreign key for Property
+
+    [ForeignKey(nameof(PropertyId))]
     public required Property Property { get; set; }
 
     [Required]
