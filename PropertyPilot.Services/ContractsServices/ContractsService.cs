@@ -30,7 +30,7 @@ public class ContractsService(PpDbContext ppDbContext, PropertiesService propert
         return contract;
     }
 
-    public async Task<Contract?> CreateContract(CreateContractRequest createContractRequest)
+    public async Task<Contract?> CreateContractAsync(CreateContractRequest createContractRequest)
     {
         var associatedProperty = await propertiesServices.GetPropertyByIdAsync(createContractRequest.PropertyId);
 
