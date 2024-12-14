@@ -1,6 +1,4 @@
-﻿using PropertyPilot.Dal.Models;
-
-namespace PropertyPilot.Services.TenantsServices.Models;
+﻿namespace PropertyPilot.Services.TenantsServices.Models;
 
 public record BaseTenantRequest
 {
@@ -8,6 +6,5 @@ public record BaseTenantRequest
     public string? EmiratesId { get; init; }
     public required string PhoneNumber { get; init; }
     public string? Email { get; init; }
-    public Contract? CurrentContract { get; init; }
-    public required string LifecycleStatus { get; init; }
+    public Guid? CurrentContractId { get; init; }
 }

@@ -25,7 +25,7 @@ public class TenantsService(PpDbContext ppDbContext)
         return tenant;
     }
 
-    public Tenant CreateTenantBasicInfo(CreateTenantRequest newTenantRequest)
+    public async Task<Tenant> CreateTenantBasicInfo(CreateTenantRequest newTenantRequest)
     {
         var newTenant = new Tenant
         {
@@ -37,6 +37,7 @@ public class TenantsService(PpDbContext ppDbContext)
         };
 
         ppDbContext.Tenants.Add(newTenant);
+        await ppDbContext.SaveChangesAsync();
         return newTenant;
     }
 }

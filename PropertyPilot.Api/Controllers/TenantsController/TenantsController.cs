@@ -49,8 +49,13 @@ public class TenantsController(TenantsService tenantsService) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Tenant>> CreateTenant(CreateTenantRequest request)
     {
-        var newTenant = tenantsService.CreateTenantBasicInfo(request);
+        var newTenant = await tenantsService.CreateTenantBasicInfo(request);
 
-        return Ok(newTenant);
+        //return Ok(newTenant);
+
+        return CreatedAtAction(
+            nameof(GetTenantById),
+            new { id = newTenant.Id },
+            newTenant);
     }
 }
