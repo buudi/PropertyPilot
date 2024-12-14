@@ -13,12 +13,12 @@ public class PpDbContext(IConfiguration configuration) : DbContext
             .UseSnakeCaseNamingConvention();
     }
 
-    public DbSet<PropertiesList> PropertiesList { get; set; }
-    public DbSet<Tenant> Tenant { get; set; }
+    public DbSet<Property> Properties { get; set; }
+    public DbSet<Tenant> Tenants { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<PropertiesList>()
+        modelBuilder.Entity<Property>()
             .Property(p => p.CreatedOn)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
     }

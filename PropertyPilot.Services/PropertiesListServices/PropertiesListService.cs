@@ -7,24 +7,24 @@ namespace PropertyPilot.Services.PropertyListingServices;
 
 public class PropertiesListService(PpDbContext ppDbContext)
 {
-    public async Task<List<PropertiesList>> GetAllPropertyListingsAsync()
+    public async Task<List<Property>> GetAllPropertyListingsAsync()
     {
-        List<PropertiesList> listings = await ppDbContext.PropertiesList.AsNoTracking().ToListAsync();
+        List<Property> listings = await ppDbContext.Properties.AsNoTracking().ToListAsync();
         return listings;
     }
 
-    public async Task<PropertiesList?> GetPropertyListingByIdAsync(Guid Id)
+    public async Task<Property?> GetPropertyListingByIdAsync(Guid Id)
     {
-        PropertiesList? listing = await ppDbContext.PropertiesList
+        Property? listing = await ppDbContext.Properties
             .Where(x => x.Id == Id)
             .FirstOrDefaultAsync();
 
         return listing;
     }
 
-    public PropertiesList CreatePropertyListing(CreatePropertyListingRequest createListingRequest)
+    public Property CreatePropertyListing(CreatePropertyListingRequest createListingRequest)
     {
-        var newListing = new PropertiesList
+        var newListing = new Property
         {
             PropertyName = createListingRequest.PropertyName,
             Emirate = createListingRequest.Emirate,
@@ -32,7 +32,7 @@ public class PropertiesListService(PpDbContext ppDbContext)
             UnitsCount = createListingRequest.UnitsCount
         };
 
-        ppDbContext.PropertiesList.Add(newListing);
+        ppDbContext.Properties.Add(newListing);
         ppDbContext.SaveChanges();
 
         return newListing;
@@ -40,8 +40,8 @@ public class PropertiesListService(PpDbContext ppDbContext)
 
     public async Task UpdatePropertyListingAsync(Guid id, UpdatePropertyListingRequest updatePropertyListingRequest)
     {
-        PropertiesList? existingListing = await ppDbContext
-            .PropertiesList
+        Property? existingListing = await ppDbContext
+            .Properties
             .FindAsync(id);
 
         if (existingListing == null)

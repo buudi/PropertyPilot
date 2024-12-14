@@ -25,8 +25,4 @@
     <ProjectReference Include="..\PropertyPilot.Services\PropertyPilot.Services.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\TenantsController\" />
-  </ItemGroup>
-
 </Project>

@@ -4,8 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PropertyPilot.Dal.Models;
 
-[Table("properties_list")]
-public class PropertiesList
+[Table("properties")]
+public class Property
 {
     public static class PropertyTypes
     {

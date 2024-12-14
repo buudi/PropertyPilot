@@ -25,9 +25,12 @@ public class Tenant
     [Required]
     public required string PhoneNumber { get; set; }
 
-    public string? email { get; set; }
+    public string? Email { get; set; }
 
-    // todo: foreign key to current active contract
+    /// <summary>
+    /// current active contract for the tenant
+    /// </summary>
+    public Contract? CurrentContract { get; set; }
 
     [Required]
     public required string LifecycleStatus { get; set; }

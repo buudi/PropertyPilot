@@ -18,7 +18,7 @@ public class PropertiesListController(PropertiesListService propertyListingServi
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public async Task<List<PropertiesList>> GetAllPropertyListingsAsync()
+    public async Task<List<Property>> GetAllPropertyListingsAsync()
     {
         var listings = await propertyListingService.GetAllPropertyListingsAsync();
         return listings;
@@ -30,7 +30,7 @@ public class PropertiesListController(PropertiesListService propertyListingServi
     /// <param name="id"></param>
     /// <returns></returns>
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<PropertiesList?>> GetPropertyListingById(Guid id)
+    public async Task<ActionResult<Property?>> GetPropertyListingById(Guid id)
     {
         var listing = await propertyListingService.GetPropertyListingByIdAsync(id);
 
@@ -48,7 +48,7 @@ public class PropertiesListController(PropertiesListService propertyListingServi
     /// <param name="createListingrequest"></param>
     /// <returns></returns>
     [HttpPost]
-    public ActionResult<PropertiesList> CreatePropertyListing([FromBody] CreatePropertyListingRequest createListingrequest)
+    public ActionResult<Property> CreatePropertyListing([FromBody] CreatePropertyListingRequest createListingrequest)
     {
         var newPropertyListing = propertyListingService.CreatePropertyListing(createListingrequest);
 
