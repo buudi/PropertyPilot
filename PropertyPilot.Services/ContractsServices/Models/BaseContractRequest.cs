@@ -8,7 +8,4 @@ public record BaseContractRequest
     public required DateTime EndDate { get; set; }
     public required double Rent { get; set; }
     public string? Notes { get; set; }
-    public required bool Active { get; set; }
-    public required bool Renewable { get; set; }
-    public required bool MoveOut { get; set; }
 }
