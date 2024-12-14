@@ -25,6 +25,14 @@ public class PpDbContext(IConfiguration configuration) : DbContext
             .Property(p => p.CreatedOn)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+        modelBuilder.Entity<Tenant>()
+            .Property(p => p.CreatedOn)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<Contract>()
+            .Property(p => p.CreatedOn)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
         // required one-to-one relationship between Contract and Tenant
         modelBuilder.Entity<Contract>()
             .HasOne(c => c.Tenant)

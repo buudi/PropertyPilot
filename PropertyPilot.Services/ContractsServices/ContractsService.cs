@@ -26,4 +26,5 @@ public class ContractsService(PpDbContext ppDbContext)
 
         return contract;
     }
+
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PropertyPilot.Dal.Contexts;
@@ -11,9 +12,11 @@ using PropertyPilot.Dal.Contexts;
 namespace PropertyPilot.Api.Migrations
 {
     [DbContext(typeof(PpDbContext))]
-    partial class PpDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241214113317_AddCreatedOnForContract")]
+    partial class AddCreatedOnForContract
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

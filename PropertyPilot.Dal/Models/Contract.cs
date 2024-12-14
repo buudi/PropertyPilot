@@ -42,4 +42,7 @@ public class Contract
 
     [Required]
     public required bool MoveOut { get; set; }
+
+    [Required]
+    public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 }
