@@ -1,4 +1,5 @@
 using PropertyPilot.Api.Extensions;
+using PropertyPilot.Dal.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,9 +12,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddPropertyPilotServices();
 
-//builder.Services.AddDbContext<PmsDbContext>();
-
-//builder.Services.AddScoped<PropertiesListService>();
+builder.Services.AddDbContext<PpDbContext>();
 
 var app = builder.Build();
 

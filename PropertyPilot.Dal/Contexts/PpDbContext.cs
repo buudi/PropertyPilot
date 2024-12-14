@@ -15,6 +15,7 @@ public class PpDbContext(IConfiguration configuration) : DbContext
 
     public DbSet<Property> Properties { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
+    public DbSet<Contract> Contracts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

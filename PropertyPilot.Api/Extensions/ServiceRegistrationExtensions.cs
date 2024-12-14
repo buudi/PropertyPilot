@@ -15,7 +15,7 @@ public static class ServiceRegistrationExtensions
     /// <param name="services"></param>
     public static void AddPropertyPilotServices(this IServiceCollection services)
     {
-        services.AddScoped<PropertiesListService>();
+        services.AddScoped<PropertiesService>();
         services.AddScoped<UserService>();
         services.AddScoped<JwtService>();
     }
