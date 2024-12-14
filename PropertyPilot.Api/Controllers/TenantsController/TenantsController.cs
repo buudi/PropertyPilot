@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.TenantsServices;
+using PropertyPilot.Services.TenantsServices.Models;
 
 namespace PropertyPilot.Api.Controllers.TenantsController;
 
@@ -38,5 +39,18 @@ public class TenantsController(TenantsService tenantsService) : ControllerBase
         }
 
         return Ok(tenant);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPost]
+    public async Task<ActionResult<Tenant>> CreateTenant(CreateTenantRequest request)
+    {
+        var newTenant = tenantsService.CreateTenantBasicInfo(request);
+
+        return Ok(newTenant);
     }
 }

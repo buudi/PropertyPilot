@@ -8,6 +8,7 @@ public class Tenant
 {
     public static class LifecycleStatuses
     {
+        public const string Testing = nameof(Testing);
         public const string Active = nameof(Active);
         public const string PendingRenewal = nameof(PendingRenewal);
         public const string MovingOut = nameof(MovingOut);
@@ -39,7 +40,7 @@ public class Tenant
     public required string LifecycleStatus { get; set; }
 
     [Required]
-    public required DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
     public DateTime? DateArchived { get; set; }
 }
