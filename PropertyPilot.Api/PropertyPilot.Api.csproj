@@ -25,4 +25,8 @@
     <ProjectReference Include="..\PropertyPilot.Services\PropertyPilot.Services.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\ContractsController\" />
+  </ItemGroup>
+
 </Project>

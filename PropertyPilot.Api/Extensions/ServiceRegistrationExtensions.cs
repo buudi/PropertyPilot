@@ -1,4 +1,5 @@
-﻿using PropertyPilot.Services.JwtServices;
+﻿using PropertyPilot.Services.ContractsServices;
+using PropertyPilot.Services.JwtServices;
 using PropertyPilot.Services.PropertiesServices;
 using PropertyPilot.Services.TenantsServices;
 
@@ -17,6 +18,7 @@ public static class ServiceRegistrationExtensions
     {
         services.AddScoped<PropertiesService>();
         services.AddScoped<TenantsService>();
+        services.AddScoped<ContractsService>();
         //services.AddScoped<UserService>();
         services.AddScoped<JwtService>();
     }
