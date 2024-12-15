@@ -36,6 +36,6 @@ public class Tenant
 
     public DateTime? DateArchived { get; set; }
 
-    //// navigation property to contracts (a tenant may have many contracts)
-    //public List<Contract> Contracts { get; set; } = [];
+    // navigation property to contracts (a tenant may have many contracts)
+    public List<Contract> Contracts { get; set; } = [];
 }

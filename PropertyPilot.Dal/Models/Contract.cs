@@ -40,8 +40,8 @@ public class Contract
     [Required]
     public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
-    //[ForeignKey(nameof(TenantId))]
-    //public Tenant Tenant { get; set; } = null!; // navigation property to associated tenant
-    //[ForeignKey(nameof(PropertyId))]
-    //public Property Property { get; set; } = null!; // navigation property to associated property
+    [ForeignKey(nameof(TenantId))]
+    public Tenant Tenant { get; set; } = null!; // navigation property to associated tenant
+    [ForeignKey(nameof(PropertyId))]
+    public Property Property { get; set; } = null!; // navigation property to associated property
 }

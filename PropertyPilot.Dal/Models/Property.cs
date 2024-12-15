@@ -44,5 +44,5 @@ public class Property
     [Column("date_archived")]
     public DateTime? DateArchived { get; set; } = null;
 
-    //public ICollection<Contract> Contracts { get; set; } = new List<Contract>();
+    public ICollection<Contract> Contracts { get; set; } = new List<Contract>();
 }
