@@ -12,16 +12,10 @@ public class Contract
     public Guid Id { get; set; }
 
     [Required]
-    public Guid TenantId { get; set; } // Foreign key for Tenant 
-
-    [ForeignKey(nameof(TenantId))]
-    public required Tenant Tenant { get; set; }
+    public required Guid TenantId { get; set; } // Foreign key for Tenant 
 
     [Required]
-    public Guid PropertyId { get; set; } // Foreign key for Property
-
-    [ForeignKey(nameof(PropertyId))]
-    public required Property Property { get; set; }
+    public required Guid PropertyId { get; set; } // Foreign key for Property
 
     [Required]
     public required DateTime StartDate { get; set; }
@@ -45,4 +39,9 @@ public class Contract
 
     [Required]
     public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+
+    //[ForeignKey(nameof(TenantId))]
+    //public Tenant Tenant { get; set; } = null!; // navigation property to associated tenant
+    //[ForeignKey(nameof(PropertyId))]
+    //public Property Property { get; set; } = null!; // navigation property to associated property
 }

@@ -2,12 +2,10 @@
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.ContractsServices.Models;
-using PropertyPilot.Services.PropertiesServices;
-using PropertyPilot.Services.TenantsServices;
 
 namespace PropertyPilot.Services.ContractsServices;
 
-public class ContractsService(PpDbContext ppDbContext, PropertiesService propertiesServices, TenantsService tenantsServices)
+public class ContractsService(PpDbContext ppDbContext)
 {
     public async Task<List<Contract>> GetAllContracts()
     {
@@ -32,24 +30,10 @@ public class ContractsService(PpDbContext ppDbContext, PropertiesService propert
 
     public async Task<Contract?> CreateContractAsync(CreateContractRequest createContractRequest)
     {
-        var associatedProperty = await propertiesServices.GetPropertyByIdAsync(createContractRequest.PropertyId);
-
-        if (associatedProperty == null)
-        {
-            return null;
-        }
-
-        var associatedTenant = await tenantsServices.GetTenantByIdAsync(createContractRequest.TenantId);
-
-        if (associatedTenant == null)
-        {
-            return null;
-        }
-
         var newContract = new Contract
         {
-            Tenant = associatedTenant,
-            Property = associatedProperty,
+            TenantId = createContractRequest.TenantId,
+            PropertyId = createContractRequest.PropertyId,
             StartDate = createContractRequest.StartDate,
             EndDate = createContractRequest.EndDate,
             Rent = createContractRequest.Rent,
@@ -63,5 +47,32 @@ public class ContractsService(PpDbContext ppDbContext, PropertiesService propert
         await ppDbContext.SaveChangesAsync();
 
         return newContract;
+    }
+
+    public async Task<List<Contract>> CreateContractAsync(List<CreateContractRequest> createContractRequests)
+    {
+        if (createContractRequests == null || !createContractRequests.Any())
+        {
+            throw new ArgumentException("The list of contract requests cannot be null or empty.", nameof(createContractRequests));
+        }
+
+        var newContracts = createContractRequests.Select(request => new Contract
+        {
+            TenantId = request.TenantId,
+            PropertyId = request.PropertyId,
+            StartDate = request.StartDate,
+            EndDate = request.EndDate,
+            Rent = request.Rent,
+            Notes = request.Notes,
+            Active = true,
+            Renewable = false,
+            MoveOut = false
+        }).ToList();
+
+        ppDbContext.Contracts.AddRange(newContracts);
+
+        await ppDbContext.SaveChangesAsync();
+
+        return newContracts;
     }
 }

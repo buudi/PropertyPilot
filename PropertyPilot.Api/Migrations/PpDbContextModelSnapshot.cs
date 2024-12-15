@@ -141,10 +141,6 @@ namespace PropertyPilot.Api.Migrations
                         .HasColumnName("created_on")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<Guid?>("CurrentContractId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("current_contract_id");
-
                     b.Property<DateTime?>("DateArchived")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("date_archived");
@@ -175,24 +171,20 @@ namespace PropertyPilot.Api.Migrations
                     b.HasKey("Id")
                         .HasName("pk_tenants");
 
-                    b.HasIndex("CurrentContractId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_tenants_current_contract_id");
-
                     b.ToTable("tenants", (string)null);
                 });
 
             modelBuilder.Entity("PropertyPilot.Dal.Models.Contract", b =>
                 {
                     b.HasOne("PropertyPilot.Dal.Models.Property", "Property")
-                        .WithMany()
+                        .WithMany("Contracts")
                         .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_contracts_properties_property_id");
 
                     b.HasOne("PropertyPilot.Dal.Models.Tenant", "Tenant")
-                        .WithMany()
+                        .WithMany("Contracts")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -203,14 +195,14 @@ namespace PropertyPilot.Api.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("PropertyPilot.Dal.Models.Property", b =>
+                {
+                    b.Navigation("Contracts");
+                });
+
             modelBuilder.Entity("PropertyPilot.Dal.Models.Tenant", b =>
                 {
-                    b.HasOne("PropertyPilot.Dal.Models.Contract", "CurrentContract")
-                        .WithOne()
-                        .HasForeignKey("PropertyPilot.Dal.Models.Tenant", "CurrentContractId")
-                        .HasConstraintName("fk_tenants_contracts_current_contract_id");
-
-                    b.Navigation("CurrentContract");
+                    b.Navigation("Contracts");
                 });
 #pragma warning restore 612, 618
         }

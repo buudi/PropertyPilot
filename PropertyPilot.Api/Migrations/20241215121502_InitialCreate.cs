@@ -30,6 +30,24 @@ namespace PropertyPilot.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "tenants",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "text", nullable: false),
+                    emirates_id = table.Column<string>(type: "text", nullable: true),
+                    phone_number = table.Column<string>(type: "text", nullable: false),
+                    email = table.Column<string>(type: "text", nullable: true),
+                    lifecycle_status = table.Column<string>(type: "text", nullable: false),
+                    created_on = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    date_archived = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_tenants", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "contracts",
                 columns: table => new
                 {
@@ -42,7 +60,8 @@ namespace PropertyPilot.Api.Migrations
                     notes = table.Column<string>(type: "text", nullable: true),
                     active = table.Column<bool>(type: "boolean", nullable: false),
                     renewable = table.Column<bool>(type: "boolean", nullable: false),
-                    move_out = table.Column<bool>(type: "boolean", nullable: false)
+                    move_out = table.Column<bool>(type: "boolean", nullable: false),
+                    created_on = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -53,30 +72,12 @@ namespace PropertyPilot.Api.Migrations
                         principalTable: "properties",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "tenants",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    emirates_id = table.Column<string>(type: "text", nullable: true),
-                    phone_number = table.Column<string>(type: "text", nullable: false),
-                    email = table.Column<string>(type: "text", nullable: true),
-                    current_contract_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    lifecycle_status = table.Column<string>(type: "text", nullable: false),
-                    created_on = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    date_archived = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_tenants", x => x.id);
                     table.ForeignKey(
-                        name: "fk_tenants_contracts_current_contract_id",
-                        column: x => x.current_contract_id,
-                        principalTable: "contracts",
-                        principalColumn: "id");
+                        name: "fk_contracts_tenants_tenant_id",
+                        column: x => x.tenant_id,
+                        principalTable: "tenants",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -88,41 +89,19 @@ namespace PropertyPilot.Api.Migrations
                 name: "ix_contracts_tenant_id",
                 table: "contracts",
                 column: "tenant_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_tenants_current_contract_id",
-                table: "tenants",
-                column: "current_contract_id",
-                unique: true);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_contracts_tenants_tenant_id",
-                table: "contracts",
-                column: "tenant_id",
-                principalTable: "tenants",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "fk_contracts_properties_property_id",
-                table: "contracts");
-
-            migrationBuilder.DropForeignKey(
-                name: "fk_contracts_tenants_tenant_id",
-                table: "contracts");
+            migrationBuilder.DropTable(
+                name: "contracts");
 
             migrationBuilder.DropTable(
                 name: "properties");
 
             migrationBuilder.DropTable(
                 name: "tenants");
-
-            migrationBuilder.DropTable(
-                name: "contracts");
         }
     }
 }

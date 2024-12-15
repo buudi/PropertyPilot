@@ -58,4 +58,25 @@ public class TenantsController(TenantsService tenantsService) : ControllerBase
             new { id = newTenant.Id },
             newTenant);
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="requests"></param>
+    /// <returns></returns>
+    [HttpPost("batch-create")]
+    public async Task<ActionResult<List<Tenant>>> CreateTenants([FromBody] List<CreateTenantRequest> requests)
+    {
+        if (requests == null || !requests.Any())
+        {
+            return BadRequest("The list of tenant requests cannot be null or empty.");
+        }
+
+        var newTenants = await tenantsService.CreateTenantsBasicInfo(requests);
+
+        return CreatedAtAction(
+            nameof(GetAllTenants),
+            null,
+            newTenants);
+    }
 }

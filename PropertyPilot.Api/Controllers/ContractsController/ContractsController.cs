@@ -63,4 +63,21 @@ public class ContractsController(ContractsService contractsService) : Controller
             newContract);
 
     }
+
+
+    /// <summary>
+    /// batch create contracts
+    /// </summary>
+    /// <param name="requests">list of contract requests</param>
+    /// <returns></returns>
+    [HttpPost("batch-add")]
+    public async Task<ActionResult<List<Contract>>> CreateContracts([FromBody] List<CreateContractRequest> requests)
+    {
+        var newContracts = await contractsService.CreateContractAsync(requests);
+
+        return CreatedAtAction(
+            nameof(GetAllContracts),
+            null,
+            newContracts);
+    }
 }

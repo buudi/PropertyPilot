@@ -28,14 +28,6 @@ public class Tenant
 
     public string? Email { get; set; }
 
-    /// <summary>
-    /// current active contract for the tenant
-    /// </summary>
-    public Guid? CurrentContractId { get; set; } // Foreign key for CurrentContract
-
-    [ForeignKey(nameof(CurrentContractId))]
-    public Contract? CurrentContract { get; set; }
-
     [Required]
     public required string LifecycleStatus { get; set; }
 
@@ -43,4 +35,7 @@ public class Tenant
     public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
     public DateTime? DateArchived { get; set; }
+
+    //// navigation property to contracts (a tenant may have many contracts)
+    //public List<Contract> Contracts { get; set; } = [];
 }

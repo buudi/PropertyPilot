@@ -56,4 +56,31 @@ public class PropertiesService(PpDbContext ppDbContext)
 
         await ppDbContext.SaveChangesAsync();
     }
+
+    public List<Property> CreateProperties(List<CreatePropertyRequest> createPropertyRequests)
+    {
+        // Validate the input to ensure it's not null or empty
+        if (createPropertyRequests == null || !createPropertyRequests.Any())
+        {
+            throw new ArgumentException("The list of property requests cannot be null or empty.", nameof(createPropertyRequests));
+        }
+
+        // Create a list to hold the new properties
+        var newProperties = createPropertyRequests.Select(request => new Property
+        {
+            PropertyName = request.PropertyName,
+            Emirate = request.Emirate,
+            PropertyType = request.PropertyType,
+            UnitsCount = request.UnitsCount
+        }).ToList();
+
+        // Add all properties to the database context
+        ppDbContext.Properties.AddRange(newProperties);
+
+        // Save changes to persist the data in the database
+        ppDbContext.SaveChanges();
+
+        return newProperties;
+    }
+
 }

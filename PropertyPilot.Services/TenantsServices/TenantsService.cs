@@ -40,4 +40,27 @@ public class TenantsService(PpDbContext ppDbContext)
         await ppDbContext.SaveChangesAsync();
         return newTenant;
     }
+
+    public async Task<List<Tenant>> CreateTenantsBasicInfo(List<CreateTenantRequest> newTenantRequests)
+    {
+        if (newTenantRequests == null || !newTenantRequests.Any())
+        {
+            throw new ArgumentException("The list of tenant requests cannot be null or empty.", nameof(newTenantRequests));
+        }
+
+        var newTenants = newTenantRequests.Select(request => new Tenant
+        {
+            Name = request.Name,
+            EmiratesId = request.EmiratesId,
+            PhoneNumber = request.PhoneNumber,
+            Email = request.Email,
+            LifecycleStatus = Tenant.LifecycleStatuses.Testing
+        }).ToList();
+
+        ppDbContext.Tenants.AddRange(newTenants);
+        await ppDbContext.SaveChangesAsync();
+
+        return newTenants;
+    }
+
 }

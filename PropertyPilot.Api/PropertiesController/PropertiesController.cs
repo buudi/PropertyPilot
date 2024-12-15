@@ -71,4 +71,28 @@ public class PropertiesController(PropertiesService propertiesService) : Control
 
         return NoContent();
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="createPropertyRequests"></param>
+    /// <returns></returns>
+    [HttpPost("batch-add")]
+    public ActionResult<List<Property>> CreateProperties([FromBody] List<CreatePropertyRequest> createPropertyRequests)
+    {
+        try
+        {
+            var newProperties = propertiesService.CreateProperties(createPropertyRequests);
+
+            return CreatedAtAction(
+                nameof(GetAllProperties),
+                null,
+                newProperties);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
 }
