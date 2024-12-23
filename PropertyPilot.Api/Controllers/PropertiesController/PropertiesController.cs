@@ -18,10 +18,21 @@ public class PropertiesController(PropertiesService propertiesService) : Control
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public async Task<List<Property>> GetAllProperties()
+    public async Task<List<PropertyListingRecord>> GetAllProperties()
     {
-        var properties = await propertiesService.GetAllPropertyAsync();
-        return properties;
+        var propertyListings = await propertiesService.GetAllPropertyAsync();
+        return propertyListings;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("dashboard")]
+    public IActionResult GetPropertiesDashboard()
+    {
+        var propertyDashboard = propertiesService.GetPropertiesDashboard();
+        return Ok(propertyDashboard);
     }
 
     /// <summary>

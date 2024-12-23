@@ -7,10 +7,45 @@ namespace PropertyPilot.Services.PropertiesServices;
 
 public class PropertiesService(PpDbContext ppDbContext)
 {
-    public async Task<List<Property>> GetAllPropertyAsync()
+    public async Task<List<PropertyListingRecord>> GetAllPropertyAsync()
     {
         List<Property> properties = await ppDbContext.Properties.AsNoTracking().ToListAsync();
-        return properties;
+
+        var propertyListings = new List<PropertyListingRecord>();
+
+        foreach (var property in properties)
+        {
+            var propertyListing = new PropertyListingRecord
+            {
+                Id = property.Id,
+                PropertyName = property.PropertyName,
+                Emirate = property.Emirate,
+                PropertyType = property.PropertyType,
+                Occupancy = property.PropertyType == Property.PropertyTypes.Singles
+                    ? "3/5"
+                    : "100%",
+                Revenue = 8500,
+                Expenses = 2300,
+                Caretaker = "Ahmad Shukri"
+            };
+
+            propertyListings.Add(propertyListing);
+        }
+
+        return propertyListings;
+    }
+
+    public PropertiesDashboardRecord GetPropertiesDashboard()
+    {
+        var propertyDashboard = new PropertiesDashboardRecord
+        {
+            TotalProperties = 12,
+            VacantUnits = 9,
+            OccupancyRate = 78.8,
+            AverageMonthlyRevenue = 44000
+        };
+
+        return propertyDashboard;
     }
 
     public async Task<Property?> GetPropertyByIdAsync(Guid Id)
