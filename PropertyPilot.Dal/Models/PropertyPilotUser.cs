@@ -32,6 +32,14 @@ public class PropertyPilotUser
     public string HashedPassword { get; set; } = string.Empty;
 
     [Required]
+    [DefaultValue(true)]
+    public bool HasAccess { get; set; } = true;
+
+    [Required]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
+    public DateTime LastLogin { get; set; } = DateTime.UtcNow;
+
+    [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public DateTime CreatedOn { get; set; }
 
