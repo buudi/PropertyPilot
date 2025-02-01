@@ -5,11 +5,14 @@ namespace PropertyPilot.Services.UserServices.Models;
 public class BaseUserRequest
 {
     [Required]
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; set; }
 
     [Required]
-    public string Email { get; set; } = string.Empty;
+    public required string Email { get; set; }
 
     [Required]
-    public string Role { get; set; } = string.Empty;
+    public required string Role { get; set; }
+
+    [Required]
+    public bool Access { get; set; }
 }
