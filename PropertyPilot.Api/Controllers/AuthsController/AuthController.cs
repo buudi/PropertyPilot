@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.JwtServices;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -10,10 +11,46 @@ using System.Text;
 namespace PropertyPilot.Api.Controllers.AuthsController;
 
 [ApiController]
-[Route("/api/[Controller]")]
+[Route("api/auth")]
 
 public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : ControllerBase
 {
+    [Authorize]
+    [HttpGet("me")]
+    public IActionResult GetMyAccount()
+    {
+        var authorizationHeader = Request.Headers["Authorization"].ToString();
+
+        if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
+        {
+            return Unauthorized(new { message = "Missing or invalid Authorization header" });
+        }
+
+        try
+        {
+            var token = authorizationHeader.Substring("Bearer ".Length).Trim();
+            var handler = new JwtSecurityTokenHandler();
+
+            if (!handler.CanReadToken(token))
+            {
+                return Unauthorized(new { message = "Invalid token format" });
+            }
+
+            var jwtToken = handler.ReadJwtToken(token);
+            var emailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(emailClaim))
+            {
+                return Unauthorized(new { message = "Email claim not found in token" });
+            }
+
+            return Ok(new { email = emailClaim });
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new { message = "Token validation failed", error = ex.Message });
+        }
+    }
 
     [HttpPost("signups/admin-manager")]
     public IActionResult CreateAdminManagerAccount([FromBody] SignUpModel model)
@@ -101,11 +138,13 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
             return Unauthorized("User account is archived.");
         }
 
+
         var accessToken = jwtService.GenerateAccessToken(user);
         var refreshToken = jwtService.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        user.LastLogin = DateTime.UtcNow;
         pmsDbContext.SaveChanges();
 
         return Ok(new
