@@ -10,7 +10,7 @@ namespace PropertyPilot.Api.Controllers.UsersController;
 /// <summary>
 /// PropertyPilot Users API
 /// </summary>
-[Route("api/[controller]")]
+[Route("api/users")]
 [ApiController]
 public class UsersController(UserService userService) : ControllerBase
 {
@@ -21,10 +21,10 @@ public class UsersController(UserService userService) : ControllerBase
     /// <returns>List of all PropertyPilot users.</returns>
     [Authorize(Policy = "AdminManagerOnly")]
     [HttpGet]
-    public async Task<ActionResult<List<PropertyPilotUser>>> GetAllUsers()
+    public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
-        var users = await userService.GetAllUsersAsync();
-        return users;
+        var paginatedUsers = await userService.GetAllUsersAsync(pageNumber, pageSize);
+        return Ok(paginatedUsers);
     }
 
     /// <summary>
