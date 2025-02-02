@@ -1,15 +1,25 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.PropertiesServices.Models;
 
 namespace PropertyPilot.Services.PropertiesServices;
 
-public class PropertiesService(PpDbContext ppDbContext)
+public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContext)
 {
-    public async Task<List<PropertyListingRecord>> GetAllPropertyAsync()
+    public async Task<PaginatedResult<PropertyListingRecord>> GetAllPropertyAsync(int pageNumber, int pageSize)
     {
-        List<Property> properties = await ppDbContext.Properties.AsNoTracking().ToListAsync();
+        var totalProperties = await pmsDbContext.PropertyListings.CountAsync();
+
+        List<PropertyListing> properties = await pmsDbContext.PropertyListings
+            .AsNoTracking()
+            .OrderBy(u => u.PropertyName)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var caretaker = await pmsDbContext.PropertyPilotUsers.Where(x => x.Id == Guid.Parse("8bd0a3cc-9a0b-4f9f-a9b7-86bf0e709482")).FirstOrDefaultAsync();
 
         var propertyListings = new List<PropertyListingRecord>();
 
@@ -24,15 +34,23 @@ public class PropertiesService(PpDbContext ppDbContext)
                 Occupancy = property.PropertyType == Property.PropertyTypes.Singles
                     ? "3/5"
                     : "100%",
-                Revenue = 8500,
-                Expenses = 2300,
-                Caretaker = "Ahmad Shukri"
+                UnitsCount = property.UnitsCount,
+                CaretakerId = caretaker?.Id,
+                CaretakerName = caretaker?.Name,
+                CaretakerEmail = caretaker?.Email
             };
 
             propertyListings.Add(propertyListing);
         }
 
-        return propertyListings;
+        return new PaginatedResult<PropertyListingRecord>
+        {
+            Items = propertyListings,
+            TotalItems = totalProperties,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling(totalProperties / (double)pageSize)
+        };
     }
 
     public PropertiesDashboardRecord GetPropertiesDashboard()

@@ -6,15 +6,15 @@ public record PropertyListingRecord
 
     public required string PropertyName { get; init; }
 
-    public string? Emirate { get; init; }
+    public required string Emirate { get; init; }
 
     public required string PropertyType { get; init; }
 
     public required string Occupancy { get; init; }
 
-    public required double Revenue { get; init; }
+    public int UnitsCount { get; init; }
 
-    public required double Expenses { get; init; }
-
-    public required string Caretaker { get; init; }
+    public Guid? CaretakerId { get; init; }
+    public string? CaretakerName { get; init; }
+    public string? CaretakerEmail { get; init; }
 }

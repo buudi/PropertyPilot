@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.PropertiesServices;
 using PropertyPilot.Services.PropertiesServices.Models;
@@ -9,6 +10,7 @@ namespace PropertyPilot.Api.PropertiesConrtoller;
 /// 
 /// </summary>
 /// <param name="propertiesService"></param>
+[Authorize(Policy = "ManagerAndAbove")]
 [Route("api/properties")]
 [ApiController]
 public class PropertiesController(PropertiesService propertiesService) : ControllerBase
@@ -18,10 +20,10 @@ public class PropertiesController(PropertiesService propertiesService) : Control
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public async Task<List<PropertyListingRecord>> GetAllProperties()
+    public async Task<IActionResult> GetAllProperties([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
-        var propertyListings = await propertiesService.GetAllPropertyAsync();
-        return propertyListings;
+        var propertyListings = await propertiesService.GetAllPropertyAsync(pageNumber, pageSize);
+        return Ok(propertyListings);
     }
 
     /// <summary>
