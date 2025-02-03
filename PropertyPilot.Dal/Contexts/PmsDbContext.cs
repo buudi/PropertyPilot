@@ -14,4 +14,5 @@ public class PmsDbContext(IConfiguration configuration) : DbContext
 
     public DbSet<PropertyListing> PropertyListings { get; set; }
     public DbSet<PropertyPilotUser> PropertyPilotUsers { get; set; }
+    public DbSet<Tenant> Tenants { get; set; }
 }

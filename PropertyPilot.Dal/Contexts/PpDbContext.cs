@@ -28,12 +28,6 @@ public class PpDbContext(IConfiguration configuration) : DbContext
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         modelBuilder.Entity<Contract>()
-            .HasOne(c => c.Tenant) // Each Contract has one Tenant
-            .WithMany(t => t.Contracts)    // Each Tenant can have many Contracts
-            .HasForeignKey(c => c.TenantId)
-            .IsRequired();
-
-        modelBuilder.Entity<Contract>()
             .HasOne(c => c.Property) // Each Contract has one Property
             .WithMany(p => p.Contracts)  // Each Property can have many Contracts
             .HasForeignKey(c => c.PropertyId)
