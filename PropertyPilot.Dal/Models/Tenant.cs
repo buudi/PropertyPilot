@@ -1,10 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PropertyPilot.Dal.Abstractions;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PropertyPilot.Dal.Models;
 
 [Table(nameof(Tenant))]
-public class Tenant
+public class Tenant : ITenant
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
