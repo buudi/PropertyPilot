@@ -1,0 +1,23 @@
+﻿using Microsoft.EntityFrameworkCore;
+using PropertyPilot.Dal.Contexts;
+using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.InvoiceServices.Models;
+
+namespace PropertyPilot.Services.Extensions;
+
+public static class InvoiceExtensions
+{
+    public static async Task<InvoiceRecord> AsInvoiceListingRecord(this Invoice invoice, PmsDbContext pmsDbContext)
+    {
+        var invoiceItems = await pmsDbContext
+            .InvoiceItems
+            .Where(x => x.InvoiceId == invoice.Id)
+            .ToListAsync();
+
+        return new InvoiceRecord
+        {
+            Invoice = invoice,
+            InvoiceItems = invoiceItems
+        };
+    }
+}
