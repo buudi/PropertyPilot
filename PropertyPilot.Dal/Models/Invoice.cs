@@ -20,8 +20,9 @@ public class Invoice
     public double? Discount { get; set; }
     public Guid TenantId { get; set; } // FK to Tenant
     public DateTime DateStart { get; set; }
-    public DateTime DateDue { get; set; }
+    public DateTime? DateDue { get; set; }
     public string InvoiceStatus { get; set; } = string.Empty;
     public string? Notes { get; set; }
+    public bool IsRenewable { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
