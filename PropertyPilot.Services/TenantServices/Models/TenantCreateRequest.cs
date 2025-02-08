@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PropertyPilot.Services.Attributes.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace PropertyPilot.Services.TenantServices.Models;
 
@@ -30,7 +31,8 @@ public record TenantCreateRequest
     [Required]
     public required Guid PropertyUnitId { get; set; }
 
-    public Guid SubUnitId { get; set; } = Guid.Empty; // optional
+    [GuidOrEmpty]
+    public Guid SubUnitId { get; set; } = Guid.Empty;
 
     [Required]
     public required double AssignedRent { get; set; }
