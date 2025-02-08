@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Api.Constants;
 using PropertyPilot.Services.TenantServices;
 using PropertyPilot.Services.TenantServices.Models;
 
@@ -9,7 +10,7 @@ namespace PropertyPilot.Api.Controllers.TenantsController;
 /// Tenants Controller
 /// </summary>
 
-[Authorize(Policy = "ManagerAndAbove")]
+[Authorize(Policy = AuthPolicies.ManagerAndAbove)]
 [Route("api/tenants")]
 [ApiController]
 public class TenantsController(TenantService tenantService) : ControllerBase

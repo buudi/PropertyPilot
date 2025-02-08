@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Api.Constants;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.UserServices;
 using PropertyPilot.Services.UserServices.Models;
@@ -19,7 +20,7 @@ public class UsersController(UserService userService) : ControllerBase
     /// Policy: Admin Manager Only
     /// </summary>
     /// <returns>List of all PropertyPilot users.</returns>
-    [Authorize(Policy = "AdminManagerOnly")]
+    [Authorize(Policy = AuthPolicies.ManagerAndAbove)]
     [HttpGet]
     public async Task<IActionResult> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {

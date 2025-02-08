@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using PropertyPilot.Api.Constants;
 using PropertyPilot.Api.Extensions;
 using PropertyPilot.Dal.Contexts;
 using System.Reflection;
@@ -8,8 +9,6 @@ using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -66,7 +65,6 @@ builder.Services.AddDbContext<PmsDbContext>();
 builder.Services.AddDbContext<PpDbContext>();
 builder.Services.AddPropertyPilotServices();
 
-// Add JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -88,15 +86,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add Authorization
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminManagerOnly", policy => policy.RequireRole
+    options.AddPolicy(AuthPolicies.AdminManagerOnly, policy => policy.RequireRole
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager));
-    options.AddPolicy("ManagerAndAbove", policy => policy.RequireRole
+    options.AddPolicy(AuthPolicies.ManagerAndAbove, policy => policy.RequireRole
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager,
             PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Manager));
-    options.AddPolicy("AllRoles", policy => policy.RequireRole
+    options.AddPolicy(AuthPolicies.AllRoles, policy => policy.RequireRole
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager,
             PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Manager,
             PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Caretaker));

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Api.Constants;
 using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.LookupServices;
 using PropertyPilot.Services.LookupServices.Models;
@@ -19,7 +20,7 @@ public class LookupsController(LookupService lookupService) : ControllerBase
     /// listing of properties IDs, property name, their type and the sub-units count if any
     /// </summary>
     /// <returns>List<PropetyListingsLookup></returns>
-    [Authorize(Policy = "ManagerAndAbove")]
+    [Authorize(Policy = AuthPolicies.ManagerAndAbove)]
     [HttpGet("property-listings")]
     public async Task<IActionResult> GetPropertyListingsLookup()
     {

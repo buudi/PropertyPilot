@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Api.Constants;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.PropertiesServices;
 using PropertyPilot.Services.PropertiesServices.Models;
@@ -10,7 +11,7 @@ namespace PropertyPilot.Api.PropertiesConrtoller;
 /// 
 /// </summary>
 /// <param name="propertiesService"></param>
-[Authorize(Policy = "ManagerAndAbove")]
+[Authorize(Policy = AuthPolicies.ManagerAndAbove)]
 [Route("api/properties")]
 [ApiController]
 public class PropertiesController(PropertiesService propertiesService) : ControllerBase
