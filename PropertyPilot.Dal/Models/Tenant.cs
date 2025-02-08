@@ -4,6 +4,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PropertyPilot.Dal.Models;
 
+
+// RULE: a tenant should never be deleted!!, a tenant can have a non active invoice/contract, that is okay
+
 [Table(nameof(Tenant))]
 public class Tenant : ITenant
 {
