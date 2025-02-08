@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.LookupServices;
+using PropertyPilot.Services.LookupServices.Models;
 
 namespace PropertyPilot.Api.Controllers.LookupsController;
 
@@ -22,6 +24,7 @@ public class LookupsController(LookupService lookupService) : ControllerBase
     public async Task<IActionResult> GetPropertyListingsLookup()
     {
         var lookups = await lookupService.PropertyListingsLookup();
-        return Ok(lookups);
+        var response = new ItemsResponse<List<PropertyListingsLookup>>(lookups);
+        return Ok(response);
     }
 }
