@@ -90,7 +90,7 @@ public class InvoicesService(PmsDbContext pmsDbContext)
             var tenancy = await pmsDbContext.Tenancies.FirstOrDefaultAsync(t => t.Id == invoice.TenancyId);
 
             var propertyListing =
-                await pmsDbContext.PropertyListings.FirstOrDefaultAsync(p => p.Id == tenancy.PropertyListingId);
+                await pmsDbContext.PropertyListings.FirstOrDefaultAsync(p => p.Id == tenancy!.PropertyListingId);
 
             var tenant = await pmsDbContext.Tenants.FirstOrDefaultAsync(t => t.Id == invoice.TenantId);
 
