@@ -12,5 +12,5 @@ public class InvoiceItem
     public string Description { get; set; } = string.Empty;
     public double Amount { get; set; }
     public Guid InvoiceId { get; set; } // FK to Invoice
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

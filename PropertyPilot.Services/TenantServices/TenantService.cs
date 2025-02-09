@@ -3,11 +3,13 @@ using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.Extensions;
 using PropertyPilot.Services.Generics;
+using PropertyPilot.Services.InvoiceServices;
+using PropertyPilot.Services.InvoiceServices.Models;
 using PropertyPilot.Services.TenantServices.Models;
 
 namespace PropertyPilot.Services.TenantServices;
 
-public class TenantService(PmsDbContext pmsDbContext)
+public class TenantService(PmsDbContext pmsDbContext, InvoicesService invoicesService)
 {
     public async Task<PaginatedResult<TenantListingRecord>> GetAllTenantsListingAsync(int pageNumber, int pageSize)
     {
@@ -59,10 +61,23 @@ public class TenantService(PmsDbContext pmsDbContext)
             TenantIdentification = tenantCreateRequest.TenantIdentification
         };
 
-        pmsDbContext.Tenants.Add(newTenant);
+        var tenant = pmsDbContext.Tenants.Add(newTenant);
         await pmsDbContext.SaveChangesAsync();
+
+        var tenantId = tenant.Entity.Id;
+
+        // create invoice for newly created tenant
+        var createInvoice = new CreateInvoiceRequest
+        {
+            RentAmount = tenantCreateRequest.AssignedRent,
+            Discount = tenantCreateRequest.OneTimeDiscount,
+            DateStart = tenantCreateRequest.TenancyStart,
+            IsRenewable = tenantCreateRequest.IsInvoiceRenewable,
+            InvoiceStatus = Invoice.InvoiceStatuses.Pending
+        };
+
+        await invoicesService.CreateInvoiceOnTenantCreate(tenantId, createInvoice);
 
         return newTenant.AsTenantListingRecord();
     }
-
 }
