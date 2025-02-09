@@ -76,7 +76,7 @@ public class TenantService(PmsDbContext pmsDbContext, InvoicesService invoicesSe
             InvoiceStatus = Invoice.InvoiceStatuses.Pending
         };
 
-        await invoicesService.CreateInvoiceOnTenantCreate(tenantId, createInvoice);
+        await invoicesService.CreateInvoiceOnTenantCreate(tenantId, tenantCreateRequest, createInvoice);
 
         return newTenant.AsTenantListingRecord();
     }

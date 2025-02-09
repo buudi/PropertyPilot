@@ -14,8 +14,8 @@ public class Tenancy
     public Guid? SubUnitId { get; set; } // FK to SubUnit
     public DateTime TenancyStart { get; set; }
     public DateTime? TenancyEnd { get; set; }
-    public bool IsMonthlyRenewable { get; set; }
-    public bool IsTenancyActive { get; set; }
+    public bool IsMonthlyRenewable { get; set; } = false; // default value enforced in DB level
+    public bool IsTenancyActive { get; set; } = false; // default value enforced in DB level
     public DateTime? EvacuationDate { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

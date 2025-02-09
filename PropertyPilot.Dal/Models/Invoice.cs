@@ -17,6 +17,7 @@ public class Invoice
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
+    public Guid TenancyId { get; set; } // FK to Tenancy
     public double? Discount { get; set; }
     public Guid TenantId { get; set; } // FK to Tenant
     public DateTime DateStart { get; set; }
