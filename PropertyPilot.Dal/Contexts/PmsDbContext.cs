@@ -13,8 +13,10 @@ public class PmsDbContext(IConfiguration configuration) : DbContext
     }
 
     public DbSet<PropertyListing> PropertyListings { get; set; }
+    public DbSet<SubUnit> SubUnits { get; set; }
     public DbSet<PropertyPilotUser> PropertyPilotUsers { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
+    public DbSet<Tenancy> Tenancies { get; set; }
 }
