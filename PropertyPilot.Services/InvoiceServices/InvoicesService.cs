@@ -10,7 +10,7 @@ namespace PropertyPilot.Services.InvoiceServices;
 
 public class InvoicesService(PmsDbContext pmsDbContext)
 {
-    public async Task<InvoiceRecord> CreateInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceRequest createInvoiceRequest)
+    public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceRequest createInvoiceRequest)
     {
 
         var tenancyObject = new Tenancy
