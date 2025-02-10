@@ -19,6 +19,7 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
             .Take(pageSize)
             .ToListAsync();
 
+        // todo: map caretaker to property
         var caretaker = await pmsDbContext.PropertyPilotUsers.Where(x => x.Id == Guid.Parse("8bd0a3cc-9a0b-4f9f-a9b7-86bf0e709482")).FirstOrDefaultAsync();
 
         var propertyListings = new List<PropertyListingRecord>();
@@ -31,6 +32,7 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
                 PropertyName = property.PropertyName,
                 Emirate = property.Emirate,
                 PropertyType = property.PropertyType,
+                // todo: map correct occupancy based on property type
                 Occupancy = property.PropertyType == Property.PropertyTypes.Singles
                     ? "3/5"
                     : "100%",
