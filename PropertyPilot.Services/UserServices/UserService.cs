@@ -3,11 +3,21 @@ using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.UserServices.Models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace PropertyPilot.Services.UserServices;
 
 public class UserService(PmsDbContext pmsDbContext)
 {
+
+    private static string HashPassword(string password)
+    {
+        using var sha256 = SHA256.Create();
+        var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+        return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+    }
+
     public async Task<PaginatedResult<UserResponse>> GetAllUsersAsync(int pageNumber, int pageSize)
     {
         var totalUsers = await pmsDbContext.PropertyPilotUsers.CountAsync();
@@ -57,7 +67,7 @@ public class UserService(PmsDbContext pmsDbContext)
             Email = request.Email,
             Role = request.Role,
             HasAccess = request.Access,
-            HashedPassword = request.Password
+            HashedPassword = HashPassword(request.Password)
         };
 
         var user = pmsDbContext.PropertyPilotUsers.Add(newUser);
