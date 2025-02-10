@@ -49,7 +49,7 @@ public class FinancesController(FinancesService financesService) : ControllerBas
         [FromQuery] DateTime? createDateFrom = null,
         [FromQuery] DateTime? createDateTill = null)
     {
-        // Ensure valid pagination values
+
         if (pageSize <= 0 || pageNumber <= 0)
         {
             return BadRequest("PageSize and PageNumber must be greater than zero.");
