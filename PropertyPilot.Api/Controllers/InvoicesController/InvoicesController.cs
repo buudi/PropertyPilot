@@ -52,7 +52,6 @@ public class InvoicesController(InvoicesService invoicesService) : ControllerBas
         var fromDate = createDateFrom ?? now.AddDays(-30); // last 30 days  
         var tillDate = createDateTill ?? now; // up to today
 
-        // Validate date range
         if (fromDate > tillDate)
         {
             return BadRequest("CreateDateFrom cannot be greater than CreateDateTill.");
