@@ -1,5 +1,5 @@
 ﻿using PropertyPilot.Services.ContractsServices;
-using PropertyPilot.Services.InvoiceServices;
+using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.JwtServices;
 using PropertyPilot.Services.LookupServices;
 using PropertyPilot.Services.PropertiesServices;

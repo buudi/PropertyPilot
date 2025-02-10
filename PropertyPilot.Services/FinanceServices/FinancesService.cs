@@ -6,7 +6,7 @@ using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.InvoiceServices.Models;
 using PropertyPilot.Services.TenantServices.Models;
 
-namespace PropertyPilot.Services.InvoiceServices;
+namespace PropertyPilot.Services.FinanceServices;
 
 public class FinancesService(PmsDbContext pmsDbContext)
 {

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Api.Constants;
-using PropertyPilot.Services.InvoiceServices;
+using PropertyPilot.Services.FinanceServices;
 
-namespace PropertyPilot.Api.Controllers.InvoicesController;
+namespace PropertyPilot.Api.Controllers.FinancesController;
 
 /// <summary>
 /// Provides API endpoints for managing invoices, including retrieving paginated invoice listings.
