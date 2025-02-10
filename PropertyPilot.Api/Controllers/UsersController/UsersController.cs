@@ -51,9 +51,9 @@ public class UsersController(UserService userService) : ControllerBase
     /// <param name="request"></param>
     /// <returns>Created PropertyPilot User</returns>
     [HttpPost]
-    public ActionResult<PropertyPilotUser> CreateUser(CreateUserRequest request)
+    public async Task<ActionResult<PropertyPilotUser>> CreateUser(CreateUserRequest request)
     {
-        var createdUser = userService.CreateUser(request);
+        var createdUser = await userService.CreateUser(request);
 
         return CreatedAtAction(
             nameof(GetUserById),

@@ -49,7 +49,7 @@ public class UserService(PmsDbContext pmsDbContext)
             .FirstOrDefaultAsync();
     }
 
-    public PropertyPilotUser CreateUser(CreateUserRequest request)
+    public async Task<PropertyPilotUser> CreateUser(CreateUserRequest request)
     {
         var newUser = new PropertyPilotUser
         {
@@ -61,21 +61,29 @@ public class UserService(PmsDbContext pmsDbContext)
         };
 
         var user = pmsDbContext.PropertyPilotUsers.Add(newUser);
-        pmsDbContext.SaveChanges();
+        await pmsDbContext.SaveChangesAsync();
 
+        var userId = user.Entity.Id;
+
+        var monetaryAccount = new MonetaryAccount
+        {
+            AccountName = $"{request.Name} Monetary Account",
+            UserId = userId,
+            Balance = 0,
+        };
+
+        pmsDbContext.MonetaryAccounts.Add(monetaryAccount);
         return user.Entity;
     }
 
     public void UpdateUser(Guid id, UpdateUserRequest request)
     {
         var userToUpdate = pmsDbContext.PropertyPilotUsers
-            .Where(x => x.Id == id)
-            .FirstOrDefault();
+            .FirstOrDefault(x => x.Id == id);
 
-        if (userToUpdate != null)
-        {
-            userToUpdate.Name = request.Name;
-            userToUpdate.Email = request.Email;
-        }
+        if (userToUpdate == null) return;
+
+        userToUpdate.Name = request.Name;
+        userToUpdate.Email = request.Email;
     }
 }
