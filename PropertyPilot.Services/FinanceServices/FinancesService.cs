@@ -116,4 +116,26 @@ public class FinancesService(PmsDbContext pmsDbContext)
             TotalPages = totalPages
         };
     }
+
+    public async Task<PaginatedResult<MonetaryAccount>> GetAllMonetaryAccountsListingItems(int pageSize, int pageNumber)
+    {
+        var query = pmsDbContext.MonetaryAccounts;
+
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var monetaryAccounts = await query.OrderBy(account => account.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<MonetaryAccount>
+        {
+            Items = monetaryAccounts,
+            TotalItems = totalItems,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
+    }
 }

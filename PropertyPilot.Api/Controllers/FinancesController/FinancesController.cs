@@ -70,5 +70,34 @@ public class FinancesController(FinancesService financesService) : ControllerBas
         return Ok(result);
     }
 
+    /// <summary>
+    /// Retrieves a paginated list of monetary accounts.
+    /// </summary>
+    /// <param name="pageSize">
+    /// The number of items to include in each page. Must be greater than zero.
+    /// </param>
+    /// <param name="pageNumber">
+    /// The page number to retrieve. Must be greater than zero.
+    /// </param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> containing a paginated list of monetary accounts.
+    /// </returns>
+    /// <remarks>
+    /// This endpoint requires the "ManagerAndAbove" authorization policy.
+    /// </remarks>
+    [Authorize(Policy = AuthPolicies.ManagerAndAbove)]
+    [HttpGet("accounts/listings")]
+    public async Task<IActionResult> GetAllMonetaryAccountsListingItems(
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageNumber = 1)
+    {
+        if (pageSize <= 0 || pageNumber <= 0)
+        {
+            return BadRequest("PageSize and PageNumber must be greater than zero.");
+        }
 
+        var result = await financesService.GetAllMonetaryAccountsListingItems(pageSize, pageNumber);
+
+        return Ok(result);
+    }
 }
