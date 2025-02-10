@@ -9,7 +9,7 @@ using PropertyPilot.Services.TenantServices.Models;
 
 namespace PropertyPilot.Services.TenantServices;
 
-public class TenantService(PmsDbContext pmsDbContext, InvoicesService invoicesService)
+public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesService)
 {
     public async Task<PaginatedResult<TenantListingRecord>> GetAllTenantsListingAsync(int pageNumber, int pageSize)
     {

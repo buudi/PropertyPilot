@@ -12,29 +12,37 @@ namespace PropertyPilot.Api.Controllers.InvoicesController;
 /// This controller is responsible for handling HTTP requests related to invoices.
 /// It includes endpoints that require specific authorization policies, such as "ManagerAndAbove".
 /// </remarks>
-/// <param name="invoicesService">
+/// <param name="financesService">
 /// The service responsible for performing operations related to invoices.
 /// </param>
 [ApiController]
-[Route("api/invoices")]
-public class InvoicesController(InvoicesService invoicesService) : ControllerBase
+[Route("api/finances")]
+public class FinancesController(FinancesService financesService) : ControllerBase
 {
     /// <summary>
     /// Retrieves a paginated list of invoice listing items within a specified date range.
     /// </summary>
-    /// <param name="pageSize">The number of items to include on each page. Must be greater than zero.</param>
-    /// <param name="pageNumber">The page number to retrieve. Must be greater than zero.</param>
-    /// <param name="createDateFrom">The start date of the invoice creation date range.</param>
-    /// <param name="createDateTill">The end date of the invoice creation date range.</param>
+    /// <param name="pageSize">
+    /// The number of items to include in each page. Defaults to 10. Must be greater than zero.
+    /// </param>
+    /// <param name="pageNumber">
+    /// The page number to retrieve. Defaults to 1. Must be greater than zero.
+    /// </param>
+    /// <param name="createDateFrom">
+    /// The start date of the invoice creation date range. Defaults to 30 days prior to the current date if not provided.
+    /// </param>
+    /// <param name="createDateTill">
+    /// The end date of the invoice creation date range. Defaults to the current date if not provided.
+    /// </param>
     /// <returns>
-    /// An <see cref="IActionResult"/> containing a paginated list of invoice listing items if successful,
-    /// or a <see cref="BadRequestObjectResult"/> if the input parameters are invalid.
+    /// An <see cref="IActionResult"/> containing a paginated list of invoice listing items or a bad request response
+    /// if the input parameters are invalid.
     /// </returns>
     /// <remarks>
     /// This endpoint is restricted to users with the "ManagerAndAbove" authorization policy.
     /// </remarks>
     [Authorize(Policy = AuthPolicies.ManagerAndAbove)]
-    [HttpGet("listings")]
+    [HttpGet("invoices/listings")]
     public async Task<IActionResult> GetAllInvoicesListingItems(
         [FromQuery] int pageSize = 10,
         [FromQuery] int pageNumber = 1,
@@ -57,7 +65,7 @@ public class InvoicesController(InvoicesService invoicesService) : ControllerBas
             return BadRequest("CreateDateFrom cannot be greater than CreateDateTill.");
         }
 
-        var result = await invoicesService.GetAllInvoicesListingItems(pageSize, pageNumber, fromDate, tillDate);
+        var result = await financesService.GetAllInvoicesListingItems(pageSize, pageNumber, fromDate, tillDate);
 
         return Ok(result);
     }

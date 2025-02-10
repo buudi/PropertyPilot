@@ -8,7 +8,7 @@ using PropertyPilot.Services.TenantServices.Models;
 
 namespace PropertyPilot.Services.InvoiceServices;
 
-public class InvoicesService(PmsDbContext pmsDbContext)
+public class FinancesService(PmsDbContext pmsDbContext)
 {
     public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceRequest createInvoiceRequest)
     {

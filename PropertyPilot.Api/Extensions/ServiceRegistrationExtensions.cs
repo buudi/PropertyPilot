@@ -25,6 +25,6 @@ public static class ServiceRegistrationExtensions
         services.AddScoped<UserService>();
         services.AddScoped<TenantService>();
         services.AddScoped<LookupService>();
-        services.AddScoped<InvoicesService>();
+        services.AddScoped<FinancesService>();
     }
 }
