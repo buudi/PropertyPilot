@@ -43,12 +43,7 @@ public class TenantService(PmsDbContext pmsDbContext, InvoicesService invoicesSe
             .Where(x => x.Id == tenantId)
             .FirstOrDefaultAsync();
 
-        if (tenant == null)
-        {
-            return null;
-        }
-
-        return tenant.AsTenantListingRecord();
+        return tenant?.AsTenantListingRecord();
     }
 
     public async Task<TenantListingRecord> CreateTenantAsync(TenantCreateRequest tenantCreateRequest)
