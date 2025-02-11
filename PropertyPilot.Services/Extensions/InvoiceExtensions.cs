@@ -20,4 +20,15 @@ public static class InvoiceExtensions
             InvoiceItems = invoiceItems
         };
     }
+
+    public static async Task<double> TotalAmountMinusDiscount(this Invoice invoice, PmsDbContext pmsDbContext)
+    {
+        var invoiceItems = await pmsDbContext.InvoiceItems.Where(item => item.InvoiceId == invoice.Id).ToListAsync();
+
+        var totalAmount = invoiceItems.Sum(item => item.Amount);
+
+        if (invoice.Discount.HasValue) totalAmount -= invoice.Discount.Value;
+
+        return totalAmount;
+    }
 }
