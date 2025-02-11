@@ -176,6 +176,35 @@ public class FinancesService(PmsDbContext pmsDbContext)
             : Invoice.InvoiceStatuses.Outstanding;
 
         await pmsDbContext.SaveChangesAsync();
+    }
+
+    public async Task<MonetaryAccount> UpdateAccountBalance(Transaction transaction)
+    {
+        if (transaction == null) throw new ArgumentNullException(nameof(transaction));
+
+        var sourceAccount = transaction.SourceAccountId.HasValue
+            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.SourceAccountId.Value)
+            : null;
+
+        var destinationAccount = transaction.DestinationAccountId.HasValue
+            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.DestinationAccountId.Value)
+            : null;
+
+        if (sourceAccount != null)
+        {
+            if (sourceAccount.Balance < transaction.Amount - Tolerance) throw new InvalidOperationException("Insufficient balance in the source account.");
+
+            sourceAccount.Balance -= transaction.Amount;
+            pmsDbContext.MonetaryAccounts.Update(sourceAccount);
+        }
+
+        if (destinationAccount != null)
+        {
+            destinationAccount.Balance += transaction.Amount;
+            pmsDbContext.MonetaryAccounts.Update(destinationAccount);
+        }
+
+        await pmsDbContext.SaveChangesAsync();
         }
     }
 }
