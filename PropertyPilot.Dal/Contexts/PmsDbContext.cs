@@ -20,4 +20,5 @@ public class PmsDbContext(IConfiguration configuration) : DbContext
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
     public DbSet<Tenancy> Tenancies { get; set; }
     public DbSet<MonetaryAccount> MonetaryAccounts { get; set; }
+    public DbSet<Transaction> Transactions { get; set; }
 }
