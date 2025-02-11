@@ -15,8 +15,4 @@
     <ProjectReference Include="..\PropertyPilot.Dal\PropertyPilot.Dal.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="NewFolder\" />
-  </ItemGroup>
-
 </Project>

@@ -2,6 +2,7 @@
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.Extensions;
+using PropertyPilot.Services.FinanceServices.Models;
 using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.InvoiceServices.Models;
 using PropertyPilot.Services.TenantServices.Models;
@@ -10,6 +11,10 @@ namespace PropertyPilot.Services.FinanceServices;
 
 public class FinancesService(PmsDbContext pmsDbContext)
 {
+    private const double Tolerance = 1.0;
+    private readonly Guid _mainMonetaryAccountGuid = Guid.Parse("7e174c5d-3756-4f9d-87b3-8f5e59f7f69e");
+    private readonly Guid _stripeMonetaryAccountGuid = Guid.Parse("d24bde15-7ab2-46e9-9852-d99b51bc5e19");
+
     public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceRequest createInvoiceRequest)
     {
 
@@ -205,6 +210,68 @@ public class FinancesService(PmsDbContext pmsDbContext)
         }
 
         await pmsDbContext.SaveChangesAsync();
+
+        return destinationAccount ?? sourceAccount!;
+    }
+
+
+
+    public async Task<RentPaymentTransactionRecord> RecordRentPayment(Guid userId, RentPaymentRequest request)
+    {
+        var invoice = pmsDbContext
+            .Invoices
+            .Where(x => x.Id == request.InvoiceId)
+            .FirstOrDefaultAsync();
+
+        if (invoice == null)
+        {
+            throw new ArgumentException($"Invoice with id {request.InvoiceId} not found");
         }
+
+        var receiverAccountId = request.PaymentMethod switch
+        {
+            RentPayment.PaymentMethods.Cash => await pmsDbContext.MonetaryAccounts
+                .Where(account => account.UserId == userId)
+                .Select(account => account.Id)
+                .FirstOrDefaultAsync(),
+            RentPayment.PaymentMethods.BankTransferToMain => _mainMonetaryAccountGuid,
+            RentPayment.PaymentMethods.StripePayment => _stripeMonetaryAccountGuid,
+            _ => throw new ArgumentException("Invalid payment method")
+        };
+
+        var rentPayment = new RentPayment
+        {
+            InvoiceId = request.InvoiceId,
+            TenantId = request.TenantId,
+            Amount = request.Amount,
+            ReceiverAccountId = receiverAccountId,
+            PaymentMethod = request.PaymentMethod,
+            AddedByUserId = userId
+        };
+
+        pmsDbContext.RentPayments.Add(rentPayment);
+        await pmsDbContext.SaveChangesAsync();
+
+        var rentPaymentId = rentPayment.Id;
+
+        var transaction = new Transaction
+        {
+            TransactionType = Transaction.TransactionTypes.RentPayment,
+            ReferenceId = rentPaymentId,
+            SourceAccountId = null,
+            DestinationAccountId = receiverAccountId,
+            Amount = request.Amount
+        };
+
+        pmsDbContext.Transactions.Add(transaction);
+        await pmsDbContext.SaveChangesAsync();
+
+        await UpdateAccountBalance(transaction);
+
+        return new RentPaymentTransactionRecord
+        {
+            RentPayment = rentPayment,
+            Transaction = transaction
+        };
     }
 }
