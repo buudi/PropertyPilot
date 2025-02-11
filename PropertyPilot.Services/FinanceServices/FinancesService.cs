@@ -14,6 +14,34 @@ public class FinancesService(PmsDbContext pmsDbContext)
     private const double Tolerance = 1.0;
     private readonly Guid _mainMonetaryAccountGuid = Guid.Parse("7e174c5d-3756-4f9d-87b3-8f5e59f7f69e");
     private readonly Guid _stripeMonetaryAccountGuid = Guid.Parse("d24bde15-7ab2-46e9-9852-d99b51bc5e19");
+    private async Task<MonetaryAccount> UpdateAccountBalance(Transaction transaction)
+    {
+        var sourceAccount = transaction.SourceAccountId.HasValue
+            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.SourceAccountId.Value)
+            : null;
+
+        var destinationAccount = transaction.DestinationAccountId.HasValue
+            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.DestinationAccountId.Value)
+            : null;
+
+        if (sourceAccount != null)
+        {
+            if (sourceAccount.Balance < transaction.Amount - Tolerance) throw new InvalidOperationException("Insufficient balance in the source account.");
+
+            sourceAccount.Balance -= transaction.Amount;
+            pmsDbContext.MonetaryAccounts.Update(sourceAccount);
+        }
+
+        if (destinationAccount != null)
+        {
+            destinationAccount.Balance += transaction.Amount;
+            pmsDbContext.MonetaryAccounts.Update(destinationAccount);
+        }
+
+        await pmsDbContext.SaveChangesAsync();
+
+        return destinationAccount ?? sourceAccount!;
+    }
 
     public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceRequest createInvoiceRequest)
     {
@@ -183,42 +211,9 @@ public class FinancesService(PmsDbContext pmsDbContext)
         await pmsDbContext.SaveChangesAsync();
     }
 
-    public async Task<MonetaryAccount> UpdateAccountBalance(Transaction transaction)
-    {
-        if (transaction == null) throw new ArgumentNullException(nameof(transaction));
-
-        var sourceAccount = transaction.SourceAccountId.HasValue
-            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.SourceAccountId.Value)
-            : null;
-
-        var destinationAccount = transaction.DestinationAccountId.HasValue
-            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.DestinationAccountId.Value)
-            : null;
-
-        if (sourceAccount != null)
-        {
-            if (sourceAccount.Balance < transaction.Amount - Tolerance) throw new InvalidOperationException("Insufficient balance in the source account.");
-
-            sourceAccount.Balance -= transaction.Amount;
-            pmsDbContext.MonetaryAccounts.Update(sourceAccount);
-        }
-
-        if (destinationAccount != null)
-        {
-            destinationAccount.Balance += transaction.Amount;
-            pmsDbContext.MonetaryAccounts.Update(destinationAccount);
-        }
-
-        await pmsDbContext.SaveChangesAsync();
-
-        return destinationAccount ?? sourceAccount!;
-    }
-
-
-
     public async Task<RentPaymentTransactionRecord> RecordRentPayment(Guid userId, RentPaymentRequest request)
     {
-        var invoice = pmsDbContext
+        var invoice = await pmsDbContext
             .Invoices
             .Where(x => x.Id == request.InvoiceId)
             .FirstOrDefaultAsync();
@@ -239,39 +234,49 @@ public class FinancesService(PmsDbContext pmsDbContext)
             _ => throw new ArgumentException("Invalid payment method")
         };
 
-        var rentPayment = new RentPayment
+        await using var dbTransaction = await pmsDbContext.Database.BeginTransactionAsync();
+        try
         {
-            InvoiceId = request.InvoiceId,
-            TenantId = request.TenantId,
-            Amount = request.Amount,
-            ReceiverAccountId = receiverAccountId,
-            PaymentMethod = request.PaymentMethod,
-            AddedByUserId = userId
-        };
+            var rentPayment = new RentPayment
+            {
+                InvoiceId = request.InvoiceId,
+                TenantId = request.TenantId,
+                Amount = request.Amount,
+                ReceiverAccountId = receiverAccountId,
+                PaymentMethod = request.PaymentMethod,
+                AddedByUserId = userId
+            };
 
-        pmsDbContext.RentPayments.Add(rentPayment);
-        await pmsDbContext.SaveChangesAsync();
+            pmsDbContext.RentPayments.Add(rentPayment);
+            await pmsDbContext.SaveChangesAsync();
 
-        var rentPaymentId = rentPayment.Id;
+            var transaction = new Transaction
+            {
+                TransactionType = Transaction.TransactionTypes.RentPayment,
+                ReferenceId = rentPayment.Id,
+                SourceAccountId = null,
+                DestinationAccountId = receiverAccountId,
+                Amount = request.Amount
+            };
 
-        var transaction = new Transaction
+            pmsDbContext.Transactions.Add(transaction);
+            await pmsDbContext.SaveChangesAsync();
+
+            await UpdateAccountBalance(transaction);
+            await UpdateInvoiceStatus(request.InvoiceId);
+
+            await dbTransaction.CommitAsync();
+
+            return new RentPaymentTransactionRecord
+            {
+                RentPayment = rentPayment,
+                Transaction = transaction
+            };
+        }
+        catch
         {
-            TransactionType = Transaction.TransactionTypes.RentPayment,
-            ReferenceId = rentPaymentId,
-            SourceAccountId = null,
-            DestinationAccountId = receiverAccountId,
-            Amount = request.Amount
-        };
-
-        pmsDbContext.Transactions.Add(transaction);
-        await pmsDbContext.SaveChangesAsync();
-
-        await UpdateAccountBalance(transaction);
-
-        return new RentPaymentTransactionRecord
-        {
-            RentPayment = rentPayment,
-            Transaction = transaction
-        };
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
     }
 }
