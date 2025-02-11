@@ -138,4 +138,18 @@ public class FinancesService(PmsDbContext pmsDbContext)
             TotalPages = totalPages
         };
     }
+
+    public async Task CreateMainMonetaryAccount()
+    {
+        // check if main account exists
+        var mainAccountExists = await pmsDbContext.MonetaryAccounts.AnyAsync(account => account.AccountName == "Main");
+
+        if (!mainAccountExists)
+        {
+            var mainAccount = new MonetaryAccount { AccountName = "Main" };
+
+            pmsDbContext.MonetaryAccounts.Add(mainAccount);
+            await pmsDbContext.SaveChangesAsync();
+        }
+    }
 }
