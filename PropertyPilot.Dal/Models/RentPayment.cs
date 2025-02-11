@@ -22,4 +22,5 @@ public class RentPayment
     public Guid ReceiverAccountId { get; set; } // fk to MonetaryAccount
     public required string PaymentMethod { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Guid AddedByUserId { get; set; } // who registered this payment, fk to PropertyPilotUser
 }
