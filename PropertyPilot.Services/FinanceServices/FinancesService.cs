@@ -152,4 +152,30 @@ public class FinancesService(PmsDbContext pmsDbContext)
             await pmsDbContext.SaveChangesAsync();
         }
     }
+
+    public async Task UpdateInvoiceStatus(Guid invoiceId)
+    {
+        var invoice = await pmsDbContext
+            .Invoices
+            .Where(invoice => invoice.Id == invoiceId)
+            .FirstOrDefaultAsync();
+
+        if (invoice == null)
+        {
+            return;
+        }
+
+        var rentPaymentsSum = await pmsDbContext.RentPayments
+            .Where(rentPayment => rentPayment.InvoiceId == invoice.Id)
+            .SumAsync(rentPayment => rentPayment.Amount);
+
+        var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+
+        invoice.InvoiceStatus = Math.Abs(rentPaymentsSum - invoiceTotalAmount) < Tolerance
+            ? Invoice.InvoiceStatuses.Paid
+            : Invoice.InvoiceStatuses.Outstanding;
+
+        await pmsDbContext.SaveChangesAsync();
+        }
+    }
 }
