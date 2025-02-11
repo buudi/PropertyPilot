@@ -12,7 +12,7 @@ public class MonetaryAccount
     public Guid Id { get; set; }
 
     public string AccountName { get; set; } = string.Empty;
-    public Guid UserId { get; set; } = Guid.Empty; // if no user then empty guid
+    public Guid? UserId { get; set; } // if no user then empty guid
 
     public double Balance { get; set; } = 0.0;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
