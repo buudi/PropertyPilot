@@ -20,7 +20,7 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
             .ToListAsync();
 
         // todo: map caretaker to property
-        var caretaker = await pmsDbContext.PropertyPilotUsers.Where(x => x.Id == Guid.Parse("8bd0a3cc-9a0b-4f9f-a9b7-86bf0e709482")).FirstOrDefaultAsync();
+        var caretaker = await pmsDbContext.PropertyPilotUsers.Where(x => x.Id == Guid.Parse("4e626d3c-edd4-4712-859c-2e72722d9db6")).FirstOrDefaultAsync();
 
         var propertyListings = new List<PropertyListingRecord>();
 

@@ -83,6 +83,8 @@ public class UserService(PmsDbContext pmsDbContext)
         };
 
         pmsDbContext.MonetaryAccounts.Add(monetaryAccount);
+        await pmsDbContext.SaveChangesAsync();
+
         return user.Entity;
     }
 
