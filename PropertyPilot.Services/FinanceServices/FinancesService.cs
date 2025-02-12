@@ -14,14 +14,32 @@ public class FinancesService(PmsDbContext pmsDbContext)
     private const double Tolerance = 1.0;
     private readonly Guid _mainMonetaryAccountGuid = Guid.Parse("7e174c5d-3756-4f9d-87b3-8f5e59f7f69e");
     private readonly Guid _stripeMonetaryAccountGuid = Guid.Parse("d24bde15-7ab2-46e9-9852-d99b51bc5e19");
+
+    private async Task<bool> IsInvoicePaid(Invoice invoice)
+    {
+        var rentPaymentsSum = await pmsDbContext.RentPayments
+            .Where(rentPayment => rentPayment.InvoiceId == invoice.Id)
+            .SumAsync(rentPayment => rentPayment.Amount);
+
+        var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+
+        return rentPaymentsSum - Tolerance > invoiceTotalAmount;
+    }
+
     private async Task<MonetaryAccount> UpdateAccountBalance(Transaction transaction)
     {
         var sourceAccount = transaction.SourceAccountId.HasValue
-            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.SourceAccountId.Value)
+            ? await pmsDbContext
+                .MonetaryAccounts
+                .Where(x => x.Id == transaction.SourceAccountId.Value)
+                .FirstOrDefaultAsync()
             : null;
 
         var destinationAccount = transaction.DestinationAccountId.HasValue
-            ? await pmsDbContext.MonetaryAccounts.FindAsync(transaction.DestinationAccountId.Value)
+            ? await pmsDbContext
+                .MonetaryAccounts
+                .Where(x => x.Id == transaction.DestinationAccountId.Value)
+                .FirstOrDefaultAsync()
             : null;
 
         if (sourceAccount != null)
@@ -29,18 +47,28 @@ public class FinancesService(PmsDbContext pmsDbContext)
             if (sourceAccount.Balance < transaction.Amount - Tolerance) throw new InvalidOperationException("Insufficient balance in the source account.");
 
             sourceAccount.Balance -= transaction.Amount;
-            pmsDbContext.MonetaryAccounts.Update(sourceAccount);
+            //pmsDbContext.MonetaryAccounts.Update(sourceAccount);
         }
 
         if (destinationAccount != null)
         {
             destinationAccount.Balance += transaction.Amount;
-            pmsDbContext.MonetaryAccounts.Update(destinationAccount);
+            //pmsDbContext.MonetaryAccounts.Update(destinationAccount);
         }
 
         await pmsDbContext.SaveChangesAsync();
 
         return destinationAccount ?? sourceAccount!;
+    }
+
+    public async Task<Invoice?> GetInvoiceByIdAsync(Guid invoiceId)
+    {
+        var invoice = await pmsDbContext
+            .Invoices
+            .Where(x => x.Id == invoiceId)
+            .FirstOrDefaultAsync();
+
+        return invoice ?? null;
     }
 
     public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceRequest createInvoiceRequest)
@@ -204,6 +232,11 @@ public class FinancesService(PmsDbContext pmsDbContext)
 
         var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
 
+        if (rentPaymentsSum - Tolerance > invoiceTotalAmount)
+        {
+            throw new InvalidOperationException("Invoice already been completely paid.");
+        }
+
         invoice.InvoiceStatus = Math.Abs(rentPaymentsSum - invoiceTotalAmount) < Tolerance
             ? Invoice.InvoiceStatuses.Paid
             : Invoice.InvoiceStatuses.Outstanding;
@@ -211,7 +244,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
         await pmsDbContext.SaveChangesAsync();
     }
 
-    public async Task<RentPaymentTransactionRecord> RecordRentPayment(Guid userId, RentPaymentRequest request)
+    public async Task<AttemptResult<RentPaymentTransactionRecord>> RecordRentPayment(Guid userId, RentPaymentRequest request)
     {
         var invoice = await pmsDbContext
             .Invoices
@@ -220,19 +253,31 @@ public class FinancesService(PmsDbContext pmsDbContext)
 
         if (invoice == null)
         {
-            throw new ArgumentException($"Invoice with id {request.InvoiceId} not found");
+            return new AttemptResult<RentPaymentTransactionRecord>(404, "Invoice not found");
+        }
+
+        var isInvoicePaid = await IsInvoicePaid(invoice);
+
+        if (isInvoicePaid)
+        {
+            return new AttemptResult<RentPaymentTransactionRecord>(409, "Conflict: Invoice already paid");
         }
 
         var receiverAccountId = request.PaymentMethod switch
         {
             RentPayment.PaymentMethods.Cash => await pmsDbContext.MonetaryAccounts
                 .Where(account => account.UserId == userId)
-                .Select(account => account.Id)
+                .Select(account => (Guid?)account.Id)
                 .FirstOrDefaultAsync(),
             RentPayment.PaymentMethods.BankTransferToMain => _mainMonetaryAccountGuid,
             RentPayment.PaymentMethods.StripePayment => _stripeMonetaryAccountGuid,
-            _ => throw new ArgumentException("Invalid payment method")
+            _ => null
         };
+
+        if (receiverAccountId == null)
+        {
+            return new AttemptResult<RentPaymentTransactionRecord>(400, "Bad request: Invalid payment method");
+        }
 
         await using var dbTransaction = await pmsDbContext.Database.BeginTransactionAsync();
         try
@@ -242,7 +287,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
                 InvoiceId = request.InvoiceId,
                 TenantId = request.TenantId,
                 Amount = request.Amount,
-                ReceiverAccountId = receiverAccountId,
+                ReceiverAccountId = (Guid)receiverAccountId,
                 PaymentMethod = request.PaymentMethod,
                 AddedByUserId = userId
             };
@@ -255,7 +300,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
                 TransactionType = Transaction.TransactionTypes.RentPayment,
                 ReferenceId = rentPayment.Id,
                 SourceAccountId = null,
-                DestinationAccountId = receiverAccountId,
+                DestinationAccountId = (Guid)receiverAccountId,
                 Amount = request.Amount
             };
 
@@ -267,16 +312,78 @@ public class FinancesService(PmsDbContext pmsDbContext)
 
             await dbTransaction.CommitAsync();
 
-            return new RentPaymentTransactionRecord
+            return new AttemptResult<RentPaymentTransactionRecord>(new RentPaymentTransactionRecord
             {
                 RentPayment = rentPayment,
                 Transaction = transaction
-            };
+            });
         }
         catch
         {
             await dbTransaction.RollbackAsync();
             throw;
         }
+    }
+
+    //public async Task<List<RentPaymentTransactionRecord>> GetRentPaymentTransactionRecordForInvoice(Guid invoiceId)
+    //{
+    //    var rentPayments = await pmsDbContext.RentPayments.Where(rentPayment => rentPayment.InvoiceId == invoiceId)
+    //        .ToListAsync();
+
+    //    var transactionIds = await pmsDbContext.Transactions
+    //        .Where(transaction =>
+    //            transaction
+    //            .TransactionType == "RentPayment"
+    //                && rentPayments
+    //                    .Select(rp => rp.Id)
+    //                    .Contains(transaction.ReferenceId))
+    //                    .Select(transaction => transaction.Id)
+    //                    .ToListAsync();
+
+    //    var transactions = await pmsDbContext.Transactions.Where(transaction => transactionIds.Contains(transaction.Id))
+    //        .ToListAsync();
+
+    //    var rentPaymentTransactionRecords = rentPayments.Select(rentPayment => new RentPaymentTransactionRecord
+    //    {
+    //        RentPayment = rentPayment,
+    //        Transaction = transactions.FirstOrDefault(transaction => transaction.ReferenceId == rentPayment.Id)!
+    //    })
+    //        .ToList();
+
+    //    return rentPaymentTransactionRecords;
+    //}
+
+    public async Task<List<RentPaymentTransactionRecord>> GetRentPaymentTransactionRecordForInvoice(Guid invoiceId)
+    {
+        var records = await (
+            from rp in pmsDbContext.RentPayments
+            where rp.InvoiceId == invoiceId
+            join t in pmsDbContext.Transactions
+                on rp.Id equals t.ReferenceId into tGroup
+            from t in tGroup.DefaultIfEmpty()
+            select new RentPaymentTransactionRecord
+            {
+                RentPayment = rp,
+                Transaction = t
+            }
+        ).ToListAsync();
+
+        return records;
+    }
+
+    public async Task<RentPaymentTransactionRecord?> GetRentPaymentTransactionRecordByPaymentId(Guid paymentId)
+    {
+        var rentPayment = await pmsDbContext.RentPayments
+            .Where(x => x.Id == paymentId)
+            .FirstOrDefaultAsync();
+
+        if (rentPayment == null)
+        {
+            return null;
+        }
+
+        var record = await rentPayment.AsRentPaymentRecord(pmsDbContext);
+
+        return record;
     }
 }
