@@ -138,4 +138,38 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
         return newProperties;
     }
 
+    public async Task PopulateSubUnitsAsync()
+    {
+        // get all properties where UnitsCount > 0
+        var properties = await pmsDbContext.PropertyListings.Where(x => x.UnitsCount > 0).ToListAsync();
+
+        // create SubUnits for that count with IdentifierName "A1, A2" and so on
+        foreach (var property in properties)
+        {
+            var propertyId = property.Id;
+            var unitsCount = property.UnitsCount;
+
+            var existingSubs = await pmsDbContext.SubUnits.Where(x => x.PropertyListingId == propertyId).ToListAsync();
+            var existingSubsCount = existingSubs.Count;
+
+            if (existingSubsCount >= unitsCount)
+            {
+                continue;
+            }
+
+            for (var i = 0; i < unitsCount - existingSubsCount; i++)
+            {
+                var subUnit = new SubUnit
+                {
+                    PropertyListingId = propertyId,
+                    IdentifierName = $"S{i + 1}"
+                };
+
+                pmsDbContext.SubUnits.Add(subUnit);
+            }
+        }
+
+        await pmsDbContext.SaveChangesAsync();
+    }
+
 }
