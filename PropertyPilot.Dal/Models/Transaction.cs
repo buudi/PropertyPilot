@@ -23,5 +23,5 @@ public class Transaction
     public Guid? DestinationAccountId { get; set; } // account credited, fk to MonetaryAccount
     public double Amount { get; set; } = 0.0;
     public string Currency { get; set; } = "AED";
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
