@@ -1,7 +1,13 @@
-﻿namespace PropertyPilot.Dal.Models;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
+namespace PropertyPilot.Dal.Models;
+
+[Table(nameof(Expense))]
 public class Expense
 {
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
     public Guid? PropertyListingId { get; set; }
     public Guid PaidByAccountId { get; set; }
