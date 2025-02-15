@@ -416,7 +416,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
         };
     }
 
-    public async Task<Expense> RecordExpenseAsync(CreateExpenseRequest createExpenseRequest)
+    public async Task<ExpenseTransactionRecord> RecordExpenseAsync(CreateExpenseRequest createExpenseRequest)
     {
         var paidByAccountId = await pmsDbContext.MonetaryAccounts
             .Where(x => x.UserId == createExpenseRequest.PaidByUserId)
@@ -436,6 +436,18 @@ public class FinancesService(PmsDbContext pmsDbContext)
         pmsDbContext.Expenses.Add(expense);
         await pmsDbContext.SaveChangesAsync();
 
-        return expense;
+        var transaction = new Transaction
+        {
+            TransactionType = Transaction.TransactionTypes.Expense,
+            ReferenceId = expense.Id,
+            SourceAccountId = paidByAccountId,
+            Amount = createExpenseRequest.Amount
+        };
+        pmsDbContext.Transactions.Add(transaction);
+        await pmsDbContext.SaveChangesAsync();
+
+
+        return await expense.AsExpenseTransactionRecord(pmsDbContext);
     }
+
 }
