@@ -415,4 +415,27 @@ public class FinancesService(PmsDbContext pmsDbContext)
             TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
         };
     }
+
+    public async Task<Expense> RecordExpenseAsync(CreateExpenseRequest createExpenseRequest)
+    {
+        var paidByAccountId = await pmsDbContext.MonetaryAccounts
+            .Where(x => x.UserId == createExpenseRequest.PaidByUserId)
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync();
+
+        var expense = new Expense
+        {
+            PropertyListingId = createExpenseRequest.PropertyListingId,
+            PaidByAccountId = paidByAccountId,
+            PaidByUserId = createExpenseRequest.PaidByUserId,
+            Category = createExpenseRequest.Category,
+            Description = createExpenseRequest.Description,
+            Amount = createExpenseRequest.Amount
+        };
+
+        pmsDbContext.Expenses.Add(expense);
+        await pmsDbContext.SaveChangesAsync();
+
+        return expense;
+    }
 }
