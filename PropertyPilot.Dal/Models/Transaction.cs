@@ -11,7 +11,6 @@ public class Transaction
         public const string Transfer = nameof(Transfer);
         public const string RentPayment = nameof(RentPayment);
         public const string Expense = nameof(Expense);
-        public const string ReturnedRent = nameof(ReturnedRent);
     }
 
     [Key]

@@ -1,4 +1,5 @@
 ﻿using PropertyPilot.Dal.Models;
+using Transaction = PropertyPilot.Dal.Models.Transaction;
 
 namespace PropertyPilot.Services.FinanceServices.Models;
 
