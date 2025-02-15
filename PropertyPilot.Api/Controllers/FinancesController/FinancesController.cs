@@ -242,4 +242,18 @@ public class FinancesController(FinancesService financesService) : ControllerBas
 
         return StatusCode(201, expense);
     }
+
+    /// <summary>
+    /// Record Transfer
+    /// </summary>
+    /// <param name="createTransferRequest"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.AllRoles)]
+    [HttpPost("transfers")]
+    public async Task<IActionResult> RecordTransfer(CreateTransferRequest createTransferRequest)
+    {
+        var transfer = await financesService.RecordTransferAsync(createTransferRequest);
+
+        return StatusCode(201, transfer);
+    }
 }

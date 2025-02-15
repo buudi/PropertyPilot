@@ -451,4 +451,35 @@ public class FinancesService(PmsDbContext pmsDbContext)
         return await expense.AsExpenseTransactionRecord(pmsDbContext);
     }
 
+    public async Task<Transaction> RecordTransferAsync(CreateTransferRequest request)
+    {
+        var transaction = new Transaction
+        {
+            TransactionType = Transaction.TransactionTypes.Transfer,
+            ReferenceId = Guid.Empty,
+            SourceAccountId = request.SourceAccountId,
+            DestinationAccountId = request.DestinationAccountId,
+            Amount = request.Amount
+        };
+
+        await using var dbTransaction = await pmsDbContext.Database.BeginTransactionAsync();
+        try
+        {
+            pmsDbContext.Transactions.Add(transaction);
+            await pmsDbContext.SaveChangesAsync();
+
+            await UpdateAccountBalance(transaction);
+
+            await dbTransaction.CommitAsync();
+
+            return transaction;
+        }
+        catch
+        {
+            await dbTransaction.RollbackAsync();
+            throw;
+        }
+
+    }
+
 }
