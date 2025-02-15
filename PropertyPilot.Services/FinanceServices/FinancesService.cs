@@ -446,6 +446,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
         pmsDbContext.Transactions.Add(transaction);
         await pmsDbContext.SaveChangesAsync();
 
+        await UpdateAccountBalance(transaction);
 
         return await expense.AsExpenseTransactionRecord(pmsDbContext);
     }
