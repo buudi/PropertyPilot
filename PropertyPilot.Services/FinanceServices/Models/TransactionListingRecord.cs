@@ -1,10 +1,54 @@
-﻿using PropertyPilot.Dal.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using PropertyPilot.Dal.Contexts;
+using PropertyPilot.Dal.Models;
 
 namespace PropertyPilot.Services.FinanceServices.Models;
 
 public record TransactionListingRecord
 {
-    public required Transaction Transaction { get; init; }
-    public RentPayment? RentPayment { get; init; }
-    public Expense? Expense { get; init; }
+    public Transaction Transaction { get; set; }
+    public RentPayment? RentPayment { get; set; }
+    public Expense? Expense { get; set; }
+
+    private TransactionListingRecord(Transaction transaction)
+    {
+        Transaction = transaction;
+    }
+
+    public static async Task<TransactionListingRecord> CreateAsync(Transaction transaction, PmsDbContext pmsDbContext)
+    {
+        var listing = new TransactionListingRecord(transaction);
+
+        switch (transaction.TransactionType)
+        {
+            case Transaction.TransactionTypes.RentPayment:
+                {
+                    var rentPayment = await pmsDbContext.RentPayments
+                        .Where(x => x.Id == transaction.ReferenceId)
+                        .FirstOrDefaultAsync();
+
+                    if (rentPayment != null)
+                    {
+                        listing.RentPayment = rentPayment;
+                    }
+
+                    break;
+                }
+            case Transaction.TransactionTypes.Expense:
+                {
+                    var expense = await pmsDbContext.Expenses
+                        .Where(x => x.Id == transaction.ReferenceId)
+                        .FirstOrDefaultAsync();
+
+                    if (expense != null)
+                    {
+                        listing.Expense = expense;
+                    }
+
+                    break;
+                }
+        }
+
+        return listing;
+    }
 }

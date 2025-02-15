@@ -211,8 +211,21 @@ public class FinancesController(FinancesService financesService) : ControllerBas
             default:
                 return StatusCode(rentPaymentResult.ErrorCode.Value, new { message = rentPaymentResult.ErrorMessage });
         }
-
-
     }
 
+    /// <summary>
+    /// get transactions listing
+    /// </summary>
+    /// <param name="pageNumber"></param>
+    /// <param name="pageSize"></param>
+    /// <returns></returns>
+
+    [Authorize(Policy = AuthPolicies.ManagerAndAbove)]
+    [HttpGet("transactions/listings")]
+    public async Task<IActionResult> GetTransactionsListings([FromQuery] int pageNumber = 1, int pageSize = 10)
+    {
+        var listings = await financesService.GetTransactionsListingsAsync(pageNumber, pageSize);
+
+        return Ok(listings);
+    }
 }

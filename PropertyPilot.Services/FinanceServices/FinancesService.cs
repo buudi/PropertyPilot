@@ -386,4 +386,33 @@ public class FinancesService(PmsDbContext pmsDbContext)
 
         return record;
     }
+
+    public async Task<PaginatedResult<TransactionListingRecord>> GetTransactionsListingsAsync(int pageNumber, int pageSize)
+    {
+        var query = pmsDbContext.Transactions;
+        var transactions = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var totalItems = await query.CountAsync();
+
+        var transactionListings = new List<TransactionListingRecord>();
+
+        foreach (var transaction in transactions)
+        {
+            var transactionListing = await TransactionListingRecord.CreateAsync(transaction, pmsDbContext);
+            transactionListings.Add(transactionListing);
+        }
+
+        return new PaginatedResult<TransactionListingRecord>
+        {
+            Items = transactionListings,
+            TotalItems = totalItems,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+        };
+    }
 }
