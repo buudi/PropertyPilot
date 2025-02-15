@@ -230,7 +230,7 @@ public class FinancesController(FinancesService financesService) : ControllerBas
     }
 
     /// <summary>
-    /// Record Expense
+    /// Record Expense Transaction
     /// </summary>
     /// <param name="createExpenseRequest"></param>
     /// <returns></returns>
@@ -241,5 +241,19 @@ public class FinancesController(FinancesService financesService) : ControllerBas
         var expense = await financesService.RecordExpenseAsync(createExpenseRequest);
 
         return StatusCode(201, expense);
+    }
+
+    /// <summary>
+    /// Record Transfer Transaction
+    /// </summary>
+    /// <param name="createTransferRequest"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.AllRoles)]
+    [HttpPost("transfers")]
+    public async Task<IActionResult> RecordTransfer(CreateTransferRequest createTransferRequest)
+    {
+        var transfer = await financesService.RecordTransferAsync(createTransferRequest);
+
+        return StatusCode(201, transfer);
     }
 }
