@@ -228,4 +228,18 @@ public class FinancesController(FinancesService financesService) : ControllerBas
 
         return Ok(listings);
     }
+
+    /// <summary>
+    /// Record Expense
+    /// </summary>
+    /// <param name="createExpenseRequest"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.AllRoles)]
+    [HttpPost("expenses")]
+    public async Task<IActionResult> RecordExpense(CreateExpenseRequest createExpenseRequest)
+    {
+        var expense = await financesService.RecordExpenseAsync(createExpenseRequest);
+
+        return StatusCode(201, expense);
+    }
 }
