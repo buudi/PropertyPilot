@@ -44,7 +44,7 @@ public class PropertiesController(PropertiesService propertiesService) : Control
     /// <param name="id"></param>
     /// <returns></returns>
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<Property?>> GetPropertyById(Guid id)
+    public async Task<IActionResult> GetPropertyById(Guid id)
     {
         var properties = await propertiesService.GetPropertyByIdAsync(id);
 

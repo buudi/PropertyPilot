@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.Extensions;
 using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.PropertiesServices.Models;
 
@@ -19,28 +20,11 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
             .Take(pageSize)
             .ToListAsync();
 
-        // todo: map caretaker to property
-        var caretaker = await pmsDbContext.PropertyPilotUsers.Where(x => x.Id == Guid.Parse("4e626d3c-edd4-4712-859c-2e72722d9db6")).FirstOrDefaultAsync();
-
         var propertyListings = new List<PropertyListingRecord>();
 
         foreach (var property in properties)
         {
-            var propertyListing = new PropertyListingRecord
-            {
-                Id = property.Id,
-                PropertyName = property.PropertyName,
-                Emirate = property.Emirate,
-                PropertyType = property.PropertyType,
-                // todo: map correct occupancy based on property type
-                Occupancy = property.PropertyType == Property.PropertyTypes.Singles
-                    ? "3/5"
-                    : "100%",
-                UnitsCount = property.UnitsCount,
-                CaretakerId = caretaker?.Id,
-                CaretakerName = caretaker?.Name,
-                CaretakerEmail = caretaker?.Email
-            };
+            var propertyListing = await property.AsPropertyListingRecord(pmsDbContext);
 
             propertyListings.Add(propertyListing);
         }
@@ -68,13 +52,18 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
         return propertyDashboard;
     }
 
-    public async Task<Property?> GetPropertyByIdAsync(Guid Id)
+    public async Task<PropertyListingRecord?> GetPropertyByIdAsync(Guid Id)
     {
-        Property? property = await ppDbContext.Properties
+        var property = await pmsDbContext.PropertyListings
             .Where(x => x.Id == Id)
             .FirstOrDefaultAsync();
 
-        return property;
+        if (property == null)
+        {
+            return null;
+        }
+
+        return await property.AsPropertyListingRecord(pmsDbContext);
     }
 
     public Property CreateProperty(CreatePropertyRequest createPropertyRequest)
