@@ -22,7 +22,5 @@ public class Tenant : ITenant
 
     public required string TenantIdentification { get; set; }
 
-    public bool IsLeavingThisMonth { get; set; } = false;
-
     public bool IsAccountActive { get; set; } = true;
 }

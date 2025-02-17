@@ -23,9 +23,12 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
             .Take(pageSize)
             .ToListAsync();
 
-        var tenantsListing = tenants
-        .Select(t => t.AsTenantListingRecord())
-        .ToList();
+        var tenantsListing = new List<TenantListingRecord>();
+
+        foreach (var t in tenants)
+        {
+            tenantsListing.Add(await t.AsTenantListingRecord(pmsDbContext));
+        }
 
         return new PaginatedResult<TenantListingRecord>
         {
@@ -43,7 +46,10 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
             .Where(x => x.Id == tenantId)
             .FirstOrDefaultAsync();
 
-        return tenant?.AsTenantListingRecord();
+        if (tenant == null)
+            return null;
+
+        return await tenant.AsTenantListingRecord(pmsDbContext);
     }
 
     public async Task<TenantListingRecord> CreateTenantAsync(TenantCreateRequest tenantCreateRequest)
@@ -73,6 +79,6 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
 
         await invoicesService.CreateTenancyAndInvoiceOnTenantCreate(tenantId, tenantCreateRequest, createInvoice);
 
-        return newTenant.AsTenantListingRecord();
+        return await newTenant.AsTenantListingRecord(pmsDbContext);
     }
 }

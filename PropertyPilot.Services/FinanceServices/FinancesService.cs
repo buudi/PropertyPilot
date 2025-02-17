@@ -78,6 +78,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
         {
             TenantId = tenantId,
             PropertyListingId = tenantCreateRequest.PropertyUnitId,
+            SubUnitId = tenantCreateRequest.SubUnitId,
             TenancyStart = createInvoiceRequest.DateStart,
             TenancyEnd = tenantCreateRequest.TenancyEnd,
             IsMonthlyRenewable = tenantCreateRequest.IsInvoiceRenewable,

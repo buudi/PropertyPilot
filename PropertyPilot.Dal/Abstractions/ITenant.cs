@@ -12,7 +12,5 @@ public interface ITenant
 
     string TenantIdentification { get; set; }
 
-    bool IsLeavingThisMonth { get; set; }
-
     bool IsAccountActive { get; set; }
 }
