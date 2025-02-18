@@ -61,6 +61,46 @@ public class FinancesService(PmsDbContext pmsDbContext)
         return destinationAccount ?? sourceAccount!;
     }
 
+    private async Task<TransactionListingRecord> CreateTransactionListingRecordAsync(Transaction transaction)
+    {
+        var listing = new TransactionListingRecord
+        {
+            Transaction = await transaction.AsTransactionRecord(pmsDbContext)
+        };
+
+        switch (transaction.TransactionType)
+        {
+            case Transaction.TransactionTypes.RentPayment:
+                {
+                    var rentPayment = await pmsDbContext.RentPayments
+                        .Where(x => x.Id == transaction.ReferenceId)
+                        .FirstOrDefaultAsync();
+
+                    if (rentPayment != null)
+                    {
+                        listing.RentPayment = rentPayment;
+                    }
+
+                    break;
+                }
+            case Transaction.TransactionTypes.Expense:
+                {
+                    var expense = await pmsDbContext.Expenses
+                        .Where(x => x.Id == transaction.ReferenceId)
+                        .FirstOrDefaultAsync();
+
+                    if (expense != null)
+                    {
+                        listing.Expense = expense;
+                    }
+
+                    break;
+                }
+        }
+
+        return listing;
+    }
+
     public async Task<Invoice?> GetInvoiceByIdAsync(Guid invoiceId)
     {
         var invoice = await pmsDbContext
@@ -147,8 +187,6 @@ public class FinancesService(PmsDbContext pmsDbContext)
         {
             var invoiceRecord = await invoice.AsInvoiceListingRecord(pmsDbContext);
 
-            var totalAmount = invoiceRecord.InvoiceItems.Sum(item => item.Amount);
-
             var tenancy = await pmsDbContext.Tenancies.FirstOrDefaultAsync(t => t.Id == invoice.TenancyId);
 
             var propertyListing =
@@ -163,7 +201,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
                 PropertyUnitName = propertyListing?.PropertyName ?? "Unknown",
                 SubUnit = null, // todo: map Sub Unit when implementation is ready
                 InvoiceStatus = invoice.InvoiceStatus,
-                Amount = totalAmount,
+                Amount = await invoice.TotalAmountMinusDiscount(pmsDbContext),
                 IssuedDate = invoice.DateStart,
                 DueDate = invoice.DateDue
             });
@@ -403,7 +441,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
 
         foreach (var transaction in transactions)
         {
-            var transactionListing = await TransactionListingRecord.CreateAsync(transaction, pmsDbContext);
+            var transactionListing = await CreateTransactionListingRecordAsync(transaction);
             transactionListings.Add(transactionListing);
         }
 
