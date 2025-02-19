@@ -65,6 +65,7 @@ public class LookupsController(LookupService lookupService) : ControllerBase
     /// </summary>
     /// <returns>List of InvoiceLookup</returns>
     /// <remarks>reuturn unpaid invoices (pending and outstanding) for given tenant, returns Invoice IDs, Date Start, Invoice Status and Amount Remaining</remarks>
+    [Authorize(Policy = AuthPolicies.AllRoles)]
     [HttpGet("tenants/invoices/{tenantId:Guid}")]
     public async Task<IActionResult> GetInvoicesForTenantLookup([FromRoute] Guid tenantId)
     {
@@ -78,11 +79,27 @@ public class LookupsController(LookupService lookupService) : ControllerBase
     /// returns list of property pilot users IDs and Names
     /// </summary>
     /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.AllRoles)]
     [HttpGet("users")]
     public async Task<IActionResult> GetUsersLookup()
     {
         var lookups = await lookupService.UsersLookup();
         var response = new ItemsResponse<List<UserLookup>>(lookups);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Tenancy Lookup for given Tenant Id
+    /// </summary>
+    /// <param name="tenantId"></param>
+    /// <returns></returns>
+    /// 
+    [Authorize(Policy = AuthPolicies.AllRoles)]
+    [HttpGet("tenants/tenancies/{tenantId:Guid}")]
+    public async Task<IActionResult> GetTenanciesLookup([FromRoute] Guid tenantId)
+    {
+        var lookups = await lookupService.TenancyLookups(tenantId);
+        var response = new ItemsResponse<List<TenancyLookup>>(lookups);
         return Ok(response);
     }
 }
