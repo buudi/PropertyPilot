@@ -531,4 +531,41 @@ public class FinancesService(PmsDbContext pmsDbContext)
 
     }
 
+    public async Task<InvoiceRecord> CreateInvoiceRecord(CreateInvoiceRequest createInvoiceRequest)
+    {
+        var invoiceObject = new Invoice
+        {
+            TenancyId = createInvoiceRequest.TenancyId,
+            Discount = createInvoiceRequest.Discount,
+            TenantId = createInvoiceRequest.TenantId,
+            DateStart = DateTime.UtcNow,
+            DateDue = createInvoiceRequest.DateDue,
+            InvoiceStatus = Invoice.InvoiceStatuses.Pending,
+            IsRenewable = createInvoiceRequest.IsRenewable,
+        };
+
+        var invoice = pmsDbContext
+            .Invoices
+            .Add(invoiceObject);
+        await pmsDbContext.SaveChangesAsync();
+        var invoiceId = invoice.Entity.Id;
+
+        foreach (var item in createInvoiceRequest.InvoiceItems)
+        {
+            var invoiceItemObject = new InvoiceItem
+            {
+                Description = item.Description,
+                Amount = item.Amount,
+                InvoiceId = invoiceId
+            };
+            pmsDbContext.InvoiceItems.Add(invoiceItemObject);
+        }
+
+        await pmsDbContext.SaveChangesAsync();
+
+        var invoiceRecord = await invoice.Entity.AsInvoiceListingRecord(pmsDbContext);
+
+        return invoiceRecord;
+
+    }
 }
