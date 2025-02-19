@@ -1,6 +1,6 @@
 ﻿namespace PropertyPilot.Services.InvoiceServices.Models;
 
-public class CreateInvoiceRequest
+public class CreateInvoiceOnNewTenantRequest
 {
     public double RentAmount { get; set; }
     public double? Discount { get; set; }

@@ -68,7 +68,7 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
         var tenantId = tenant.Entity.Id;
 
         // create invoice for newly created tenant
-        var createInvoice = new CreateInvoiceRequest
+        var createInvoice = new CreateInvoiceOnNewTenantRequest
         {
             RentAmount = tenantCreateRequest.AssignedRent,
             Discount = tenantCreateRequest.OneTimeDiscount,

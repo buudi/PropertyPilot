@@ -111,7 +111,7 @@ public class FinancesService(PmsDbContext pmsDbContext)
         return invoice ?? null;
     }
 
-    public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceRequest createInvoiceRequest)
+    public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceOnNewTenantRequest createInvoiceRequest)
     {
 
         var tenancyObject = new Tenancy
