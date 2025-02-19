@@ -72,4 +72,17 @@ public class LookupsController(LookupService lookupService) : ControllerBase
         var response = new ItemsResponse<List<InvoiceLookup>>(lookups);
         return Ok(response);
     }
+
+
+    /// <summary>
+    /// returns list of property pilot users IDs and Names
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("users")]
+    public async Task<IActionResult> GetUsersLookup()
+    {
+        var lookups = await lookupService.UsersLookup();
+        var response = new ItemsResponse<List<UserLookup>>(lookups);
+        return Ok(response);
+    }
 }
