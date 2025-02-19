@@ -95,4 +95,17 @@ public class LookupService(PmsDbContext pmsDbContext)
         return invoiceLookups;
     }
 
+    public async Task<List<UserLookup>> UsersLookup()
+    {
+        var users = await pmsDbContext.PropertyPilotUsers
+            .ToListAsync();
+
+        var usersLookup = new List<UserLookup>();
+        foreach (var user in users)
+        {
+            usersLookup.Add(new UserLookup { Id = user.Id, Name = user.Name });
+        }
+
+        return usersLookup;
+    }
 }
