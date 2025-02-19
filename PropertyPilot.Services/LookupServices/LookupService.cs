@@ -108,4 +108,47 @@ public class LookupService(PmsDbContext pmsDbContext)
 
         return usersLookup;
     }
+
+    public async Task<List<TenancyLookup>> TenancyLookups(Guid tenantId)
+    {
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(x => x.TenantId == tenantId)
+            .ToListAsync();
+
+        if (tenancies.Count == 0)
+        {
+            return [];
+        }
+
+        var lookups = new List<TenancyLookup>();
+        foreach (var tenancy in tenancies)
+        {
+            var propertyName = await pmsDbContext.PropertyListings
+                .Where(x => x.Id == tenancy.PropertyListingId)
+                .Select(x => x.PropertyName)
+                .FirstOrDefaultAsync();
+
+            var subUnitIdentifierName = await pmsDbContext.SubUnits
+                .Where(x => x.Id == tenancy.SubUnitId)
+                .Select(x => x.IdentifierName)
+                .FirstOrDefaultAsync();
+
+            var lookup = new TenancyLookup
+            {
+                Id = tenancy.Id,
+                PropertyListingName = propertyName!,
+                SubUnitIdentifierName = subUnitIdentifierName,
+                TenancyStart = tenancy.TenancyStart,
+                TenancyEnd = tenancy.TenancyEnd,
+                IsMonthlyRenewable = tenancy.IsMonthlyRenewable,
+                IsTenancyActive = tenancy.IsTenancyActive,
+                EvacuationDate = tenancy.EvacuationDate
+            };
+
+            lookups.Add(lookup);
+        }
+
+        return lookups;
+    }
+
 }
