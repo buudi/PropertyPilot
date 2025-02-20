@@ -490,6 +490,8 @@ public class FinancesService(PmsDbContext pmsDbContext)
 
             await UpdateAccountBalance(transaction);
 
+            await dbTransaction.CommitAsync();
+
             return await expense.AsExpenseTransactionRecord(pmsDbContext);
         }
         catch
