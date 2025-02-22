@@ -81,4 +81,51 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
 
         return await newTenant.AsTenantListingRecord(pmsDbContext);
     }
+
+    public async Task<List<TenantListingRecord>> PopulateTestTenantData(Guid propertyUnitId, DateTime dateFrom, DateTime dateTill)
+    {
+        var subUnits = await pmsDbContext.SubUnits
+            .Where(x => x.PropertyListingId == propertyUnitId)
+            .ToListAsync();
+
+        var propertyName = await pmsDbContext.PropertyListings
+            .Where(x => x.Id == propertyUnitId)
+            .Select(x => x.PropertyName)
+            .FirstOrDefaultAsync();
+
+        var tenantCreateRequests = new List<TenantCreateRequest>();
+
+        foreach (var subUnit in subUnits)
+        {
+            Random random = new Random();
+            int randomRent = random.Next(10, 31) * 100;
+            int randomTenantNumber = random.Next(19, 9999);
+
+            var tenantCreateRequest = new TenantCreateRequest
+            {
+                Name = $"tenant populate {randomTenantNumber}",
+                PhoneNumber = "0110-123-123",
+                Email = $"tenant.{subUnit.IdentifierName}@{propertyName}.test",
+                TenantIdentification = "784-123456789-090",
+                IsAccountActive = true,
+                IsInvoiceRenewable = false,
+                PropertyUnitId = propertyUnitId,
+                SubUnitId = subUnit.Id,
+                AssignedRent = randomRent,
+                TenancyStart = dateFrom,
+                TenancyEnd = dateTill,
+            };
+
+            tenantCreateRequests.Add(tenantCreateRequest);
+        }
+
+        var createdTenantListingRecords = new List<TenantListingRecord>();
+        foreach (var request in tenantCreateRequests)
+        {
+            var record = await CreateTenantAsync(request);
+            createdTenantListingRecords.Add(record);
+        }
+
+        return createdTenantListingRecords;
+    }
 }

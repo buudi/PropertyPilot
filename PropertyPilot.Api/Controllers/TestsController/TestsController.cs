@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Api.Constants;
 using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.PropertiesServices;
+using PropertyPilot.Services.TenantServices;
 
 namespace PropertyPilot.Api.Controllers.TestsController;
 
@@ -15,7 +16,7 @@ namespace PropertyPilot.Api.Controllers.TestsController;
 [Authorize(Policy = AuthPolicies.AdminManagerOnly)]
 [Route("api/tests")]
 [ApiController]
-public class TestsController(FinancesService financesService, PropertiesService propertiesService) : ControllerBase
+public class TestsController(FinancesService financesService, PropertiesService propertiesService, TenantService tenantService) : ControllerBase
 {
     /// <summary>
     /// Ensures the creation of the main monetary account in the system.
@@ -40,6 +41,8 @@ public class TestsController(FinancesService financesService, PropertiesService 
     /// <remarks>
     /// This function asynchronously populates missing sub-units for properties with UnitsCount > 0 by creating and adding new SubUnit entries with sequentially numbered IdentifierName values.
     /// </remarks>
+
+    [Authorize(Policy = AuthPolicies.AdminManagerOnly)]
     [HttpPost("property-listings/sub-units/populate")]
     public async Task<IActionResult> PopulateSubUnits()
     {
@@ -47,4 +50,16 @@ public class TestsController(FinancesService financesService, PropertiesService 
         return NoContent();
     }
 
+    /// <summary>
+    /// This function generates test tenant records for each subunit over a specified timeline and should only be used on a newly created property with no existing tenant records.
+    /// </summary>
+    /// <returns></returns>
+    /// <remarks>This function generates test tenant records for each subunit over a specified timeline and should only be used on a newly created property of subunits with no existing tenant records.</remarks>
+    [Authorize(Policy = AuthPolicies.AdminManagerOnly)]
+    [HttpPost("tenants/populate")]
+    public async Task<IActionResult> PopulateTenantsForProperty([FromQuery] Guid propertyUnitId, [FromQuery] DateTime dateFrom, [FromQuery] DateTime dateTill)
+    {
+        var tenantRecords = await tenantService.PopulateTestTenantData(propertyUnitId, dateFrom, dateTill);
+        return Ok(tenantRecords);
+    }
 }
