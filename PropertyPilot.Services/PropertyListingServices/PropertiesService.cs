@@ -4,6 +4,7 @@ using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.Extensions;
 using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.PropertiesServices.Models;
+using PropertyPilot.Services.PropertyListingServices.Models;
 
 namespace PropertyPilot.Services.PropertiesServices;
 
@@ -161,4 +162,45 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
         await pmsDbContext.SaveChangesAsync();
     }
 
+    public async Task<TimelineResponse> GetPropertyTenantsTimelineAsync(Guid propertyId)
+    {
+        var subUnits = await pmsDbContext.SubUnits
+            .Where(x => x.PropertyListingId == propertyId)
+            .ToListAsync();
+
+        var timelineSubunits = subUnits
+            .Select(subUnit => new SubUnitTimelineResponse
+            {
+                SubUnitId = subUnit.Id,
+                SubUnitIdentifierName = subUnit.IdentifierName
+            })
+            .ToList();
+
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(x => x.PropertyListingId == propertyId)
+            .ToListAsync();
+
+        var timelineTenants = new List<TenantsTimelineResponse>();
+        foreach (var tenancy in tenancies)
+        {
+            var tenant = await pmsDbContext.Tenants
+                .Where(x => x.Id == tenancy.TenantId)
+                .FirstOrDefaultAsync();
+
+            timelineTenants.Add(new TenantsTimelineResponse
+            {
+                TenantId = tenant.Id,
+                TenantName = tenant.Name,
+                TenancyStart = tenancy.TenancyStart,
+                TenancyEnd = tenancy.TenancyEnd,
+                SubUnitId = tenancy.SubUnitId ?? Guid.Empty,
+            });
+        }
+
+        return new TimelineResponse
+        {
+            SubUnitTimelineResponse = timelineSubunits,
+            TenantsTimelineResponse = timelineTenants
+        };
+    }
 }

@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Api.Constants;
 using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.PropertiesServices;
 using PropertyPilot.Services.PropertiesServices.Models;
+using PropertyPilot.Services.PropertyListingServices.Models;
 
 namespace PropertyPilot.Api.PropertiesConrtoller;
 
@@ -109,4 +111,16 @@ public class PropertiesController(PropertiesService propertiesService) : Control
         }
     }
 
+    /// <summary>
+    /// get tenants timeline for give property unit
+    /// </summary>
+    /// <param name="propertyId"></param>
+    /// <returns></returns>
+    [HttpGet("{propertyId:guid}/tenants/timeline")]
+    public async Task<IActionResult> TenantsTimeline([FromRoute] Guid propertyId)
+    {
+        var timeline = await propertiesService.GetPropertyTenantsTimelineAsync(propertyId);
+        var response = new ItemsResponse<TimelineResponse>(timeline);
+        return Ok(response);
+    }
 }
