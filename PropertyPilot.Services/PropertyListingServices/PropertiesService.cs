@@ -67,9 +67,9 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
         return await property.AsPropertyListingRecord(pmsDbContext);
     }
 
-    public Property CreateProperty(CreatePropertyRequest createPropertyRequest)
+    public PropertyListing CreateProperty(CreatePropertyRequest createPropertyRequest)
     {
-        var newProperty = new Property
+        var newProperty = new PropertyListing()
         {
             PropertyName = createPropertyRequest.PropertyName,
             Emirate = createPropertyRequest.Emirate,
@@ -77,8 +77,8 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
             UnitsCount = createPropertyRequest.UnitsCount
         };
 
-        ppDbContext.Properties.Add(newProperty);
-        ppDbContext.SaveChanges();
+        pmsDbContext.PropertyListings.Add(newProperty);
+        pmsDbContext.SaveChanges();
 
         return newProperty;
     }

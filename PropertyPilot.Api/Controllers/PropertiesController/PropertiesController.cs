@@ -64,7 +64,7 @@ public class PropertiesController(PropertiesService propertiesService) : Control
     /// <param name="createPropertyRequest"></param>
     /// <returns></returns>
     [HttpPost]
-    public ActionResult<Property> CreateProperty([FromBody] CreatePropertyRequest createPropertyRequest)
+    public ActionResult<PropertyListing> CreateProperty([FromBody] CreatePropertyRequest createPropertyRequest)
     {
         var newProperty = propertiesService.CreateProperty(createPropertyRequest);
 

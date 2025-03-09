@@ -12,5 +12,5 @@ public record BasePropertyRequest
     [Required]
     public string PropertyType { get; init; } = string.Empty;
 
-    public int? UnitsCount { get; init; }
+    public int UnitsCount { get; init; }
 }
