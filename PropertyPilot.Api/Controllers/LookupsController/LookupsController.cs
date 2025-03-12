@@ -102,4 +102,13 @@ public class LookupsController(LookupService lookupService) : ControllerBase
         var response = new ItemsResponse<List<TenancyLookup>>(lookups);
         return Ok(response);
     }
+
+    [Authorize(Policy = AuthPolicies.AllRoles)]
+    [HttpGet("properties/{propertyListingId:guid}/subunits")]
+    public async Task<IActionResult> GetSubUnitsLookup([FromRoute] Guid propertyListingId)
+    {
+        var lookups = await lookupService.SubUnitsLookup(propertyListingId);
+        var response = new ItemsResponse<List<SubUnitsLookup>>(lookups);
+        return Ok(response);
+    }
 }

@@ -151,4 +151,28 @@ public class LookupService(PmsDbContext pmsDbContext)
         return lookups;
     }
 
+    public async Task<List<SubUnitsLookup>> SubUnitsLookup(Guid propertyListingId)
+    {
+        var subUnits = await pmsDbContext.SubUnits
+            .Where(x => x.PropertyListingId == propertyListingId)
+            .ToListAsync();
+
+        if (subUnits.Count == 0)
+        {
+            return new List<SubUnitsLookup>();
+        }
+
+        var lookUps = new List<SubUnitsLookup>();
+        foreach (var subUnit in subUnits)
+        {
+            var lookup = new SubUnitsLookup
+            {
+                Id = subUnit.Id,
+                IdentifierName = subUnit.IdentifierName
+            };
+            lookUps.Add(lookup);
+        }
+
+        return lookUps;
+    }
 }
