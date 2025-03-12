@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.Extensions;
@@ -9,7 +10,7 @@ using PropertyPilot.Services.TenantServices.Models;
 
 namespace PropertyPilot.Services.FinanceServices;
 
-public class FinancesService(PmsDbContext pmsDbContext)
+public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService> logger)
 {
     private const double Tolerance = 1.0;
     private readonly Guid _mainMonetaryAccountGuid = Guid.Parse("7e174c5d-3756-4f9d-87b3-8f5e59f7f69e");
@@ -570,4 +571,10 @@ public class FinancesService(PmsDbContext pmsDbContext)
         return invoiceRecord;
 
     }
+
+    public void RenewInvoiceScheduledJob()
+    {
+        logger.LogInformation("RenewInvoiceScheduledJob was called at {Time}", DateTime.UtcNow);
+    }
+
 }
