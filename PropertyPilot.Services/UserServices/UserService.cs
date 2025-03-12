@@ -77,7 +77,7 @@ public class UserService(PmsDbContext pmsDbContext)
 
         var monetaryAccount = new MonetaryAccount
         {
-            AccountName = $"{request.Name} Monetary Account",
+            AccountName = $"{request.Name} (حساب مالي)",
             UserId = userId,
             Balance = 0,
         };

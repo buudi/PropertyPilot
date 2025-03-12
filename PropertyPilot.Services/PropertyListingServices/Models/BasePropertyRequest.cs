@@ -7,7 +7,7 @@ public record BasePropertyRequest
     [Required]
     public string PropertyName { get; init; } = string.Empty;
 
-    public string? Emirate { get; init; }
+    public string Emirate { get; init; } = string.Empty;
 
     [Required]
     public string PropertyType { get; init; } = string.Empty;

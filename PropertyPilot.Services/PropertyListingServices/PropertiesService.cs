@@ -67,7 +67,7 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
         return await property.AsPropertyListingRecord(pmsDbContext);
     }
 
-    public PropertyListing CreateProperty(CreatePropertyRequest createPropertyRequest)
+    public async Task<PropertyListing> CreateProperty(CreatePropertyRequest createPropertyRequest)
     {
         var newProperty = new PropertyListing()
         {
@@ -78,7 +78,9 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
         };
 
         pmsDbContext.PropertyListings.Add(newProperty);
-        pmsDbContext.SaveChanges();
+        await pmsDbContext.SaveChangesAsync();
+
+        await PopulateSubUnitsAsync(newProperty);
 
         return newProperty;
     }
@@ -128,12 +130,29 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
         return newProperties;
     }
 
+    public async Task PopulateSubUnitsAsync(PropertyListing property)
+    {
+        var unitsCount = property.UnitsCount;
+        for (var i = 0; i < unitsCount; i++)
+        {
+            var subUnit = new SubUnit
+            {
+                PropertyListingId = property.Id,
+                IdentifierName = $"S{i + 1}"
+            };
+
+            pmsDbContext.SubUnits.Add(subUnit);
+        }
+
+        await pmsDbContext.SaveChangesAsync();
+    }
+
     public async Task PopulateSubUnitsAsync()
     {
         // get all properties where UnitsCount > 0
         var properties = await pmsDbContext.PropertyListings.Where(x => x.UnitsCount > 0).ToListAsync();
 
-        // create SubUnits for that count with IdentifierName "A1, A2" and so on
+        // create SubUnits for that count with IdentifierName "S1, S2" and so on
         foreach (var property in properties)
         {
             var propertyId = property.Id;
@@ -166,6 +185,7 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
     {
         var subUnits = await pmsDbContext.SubUnits
             .Where(x => x.PropertyListingId == propertyId)
+            .OrderBy(x => x.IdentifierName)
             .ToListAsync();
 
         var timelineSubunits = subUnits

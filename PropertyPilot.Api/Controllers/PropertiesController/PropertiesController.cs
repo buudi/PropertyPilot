@@ -64,9 +64,9 @@ public class PropertiesController(PropertiesService propertiesService) : Control
     /// <param name="createPropertyRequest"></param>
     /// <returns></returns>
     [HttpPost]
-    public ActionResult<PropertyListing> CreateProperty([FromBody] CreatePropertyRequest createPropertyRequest)
+    public async Task<ActionResult<PropertyListing>> CreateProperty([FromBody] CreatePropertyRequest createPropertyRequest)
     {
-        var newProperty = propertiesService.CreateProperty(createPropertyRequest);
+        var newProperty = await propertiesService.CreateProperty(createPropertyRequest);
 
         return CreatedAtAction(
             nameof(GetPropertyById),
