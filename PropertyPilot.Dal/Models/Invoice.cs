@@ -24,6 +24,5 @@ public class Invoice
     public DateTime? DateDue { get; set; }
     public string InvoiceStatus { get; set; } = string.Empty;
     public string? Notes { get; set; }
-    public bool IsRenewable { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

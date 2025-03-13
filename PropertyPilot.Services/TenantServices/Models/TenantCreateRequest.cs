@@ -25,6 +25,7 @@ public record TenantCreateRequest
 
     [Required]
     public required bool IsInvoiceRenewable { get; set; }
+    public int? RenewalPeriodInDays { get; set; }
 
     public DateTime? TenancyEnd { get; set; }
 

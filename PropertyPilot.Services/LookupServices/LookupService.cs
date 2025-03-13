@@ -140,7 +140,7 @@ public class LookupService(PmsDbContext pmsDbContext)
                 SubUnitIdentifierName = subUnitIdentifierName,
                 TenancyStart = tenancy.TenancyStart,
                 TenancyEnd = tenancy.TenancyEnd,
-                IsMonthlyRenewable = tenancy.IsMonthlyRenewable,
+                IsMonthlyRenewable = tenancy.IsRenewable,
                 IsTenancyActive = tenancy.IsTenancyActive,
                 EvacuationDate = tenancy.EvacuationDate
             };

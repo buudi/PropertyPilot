@@ -16,17 +16,16 @@ public class InvoiceRenewHostedService : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        // Start immediately and execute every 1 minute
-        _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+        _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromHours(1));
         return Task.CompletedTask;
     }
 
-    private void DoWork(object state)
+    private async void DoWork(object state)
     {
         using (var scope = _scopeFactory.CreateScope())
         {
             var financesService = scope.ServiceProvider.GetRequiredService<FinancesService>();
-            financesService.RenewInvoiceScheduledJob();
+            await financesService.RenewInvoiceScheduledJob();
         }
     }
 

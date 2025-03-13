@@ -7,7 +7,6 @@ public class CreateInvoiceRequest
     public double? Discount { get; set; }
     public DateTime? DateDue { get; set; }
     public string? Notes { get; set; }
-    public bool IsRenewable { get; set; }
     public List<CreateInvoiceItemRequest> InvoiceItems { get; set; } = [];
 }
 
