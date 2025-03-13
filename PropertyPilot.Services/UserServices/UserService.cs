@@ -102,14 +102,49 @@ public class UserService(PmsDbContext pmsDbContext)
         return user.Entity;
     }
 
-    public void UpdateUser(Guid id, UpdateUserRequest request)
+    public async Task UpdateUser(Guid id, UpdateUserRequest request)
     {
-        var userToUpdate = pmsDbContext.PropertyPilotUsers
-            .FirstOrDefault(x => x.Id == id);
+        var userToUpdate = await pmsDbContext.PropertyPilotUsers
+            .FirstOrDefaultAsync(x => x.Id == id);
 
         if (userToUpdate == null) return;
 
+        var monetaryAccount = await pmsDbContext.MonetaryAccounts
+            .FirstOrDefaultAsync(x => x.UserId == userToUpdate.Id);
+
+        if (monetaryAccount == null) return;
+
         userToUpdate.Name = request.Name;
         userToUpdate.Email = request.Email;
+        userToUpdate.HasAccess = request.HasAccess;
+
+        monetaryAccount.AccountName = request.MonetaryAccountName;
+
+        // Update caretaker properties if the user is a caretaker and caretaker properties are provided
+        if (userToUpdate.Role == PropertyPilotUser.UserRoles.Caretaker && request.CaretakerProperties != null)
+        {
+            // Remove all previously assigned caretaker properties
+            var assignedProperties = await pmsDbContext.AssignedCaretakerProperties
+                .Where(x => x.UserId == userToUpdate.Id)
+                .ToListAsync();
+            pmsDbContext.AssignedCaretakerProperties.RemoveRange(assignedProperties);
+
+            // Add new caretaker properties from the request
+            foreach (var caretakerProperty in request.CaretakerProperties)
+            {
+                var newAssignedProperty = new AssignedCaretakerProperty
+                {
+                    // You can also use caretakerProperty.UserId if that is needed,
+                    // but here we ensure that the assignment is for the current user
+                    UserId = userToUpdate.Id,
+                    PropertyListingId = caretakerProperty.PropertyId
+                };
+
+                await pmsDbContext.AssignedCaretakerProperties.AddAsync(newAssignedProperty);
+            }
+        }
+
+        await pmsDbContext.SaveChangesAsync();
     }
+
 }

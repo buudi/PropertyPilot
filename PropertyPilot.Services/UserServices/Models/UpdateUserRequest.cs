@@ -5,8 +5,16 @@ namespace PropertyPilot.Services.UserServices.Models;
 public class UpdateUserRequest
 {
     [Required]
-    public string Name { get; set; } = string.Empty;
+    public required string Name { get; init; }
 
     [Required]
-    public string Email { get; set; } = string.Empty;
+    public required string Email { get; init; }
+
+    [Required]
+    public required bool HasAccess { get; init; }
+
+    [Required]
+    public required string MonetaryAccountName { get; init; }
+
+    public List<AssignCaretakerPropertyRequest>? CaretakerProperties { get; set; } = [];
 }
