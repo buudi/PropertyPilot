@@ -64,10 +64,10 @@ public class UsersController(UserService userService) : ControllerBase
     /// <summary>
     /// Updates user Email and Name
     /// </summary>
-    [HttpPut("{id:guid}")]
-    public IActionResult UpdateUser(Guid id, UpdateUserRequest request)
+    [HttpPatch("{id:guid}")]
+    public async Task<IActionResult> UpdateUser(Guid id, UpdateUserRequest request)
     {
-        userService.UpdateUser(id, request);
+        await userService.UpdateUser(id, request);
 
         return NoContent();
     }

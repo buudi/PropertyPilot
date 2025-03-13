@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PropertyPilot.Dal.Models;
 
+[Table(nameof(AssignedCaretakerProperty))]
 public class AssignedCaretakerProperty
 {
     [Key]

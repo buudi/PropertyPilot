@@ -111,4 +111,13 @@ public class LookupsController(LookupService lookupService) : ControllerBase
         var response = new ItemsResponse<List<SubUnitsLookup>>(lookups);
         return Ok(response);
     }
+
+    [Authorize(Policy = AuthPolicies.AllRoles)]
+    [HttpGet("users/{userId:guid}/properties/caretaker-assigned")]
+    public async Task<IActionResult> GetAssignedCaretakerPropertiesLookup([FromRoute] Guid userId)
+    {
+        var lookups = await lookupService.AssignedCaretakerPropertiesLookup(userId);
+        var response = new ItemsResponse<List<AssignedCaretakerPropertiesLookup>>(lookups);
+        return Ok(response);
+    }
 }

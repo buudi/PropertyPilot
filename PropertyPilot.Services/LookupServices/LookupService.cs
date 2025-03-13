@@ -175,4 +175,26 @@ public class LookupService(PmsDbContext pmsDbContext)
 
         return lookUps;
     }
+
+    public async Task<List<AssignedCaretakerPropertiesLookup>> AssignedCaretakerPropertiesLookup(Guid userId)
+    {
+        var assignedCaretakerProperties = await pmsDbContext
+            .AssignedCaretakerProperties
+            .Where(x => x.UserId == userId)
+            .ToListAsync();
+
+        var lookups = new List<AssignedCaretakerPropertiesLookup>();
+        foreach (var assignedCaretakerProperty in assignedCaretakerProperties)
+        {
+            var lookup = new AssignedCaretakerPropertiesLookup
+            {
+                UserId = userId,
+                PropertyListingId = assignedCaretakerProperty.PropertyListingId,
+            };
+
+            lookups.Add(lookup);
+        }
+
+        return lookups;
+    }
 }
