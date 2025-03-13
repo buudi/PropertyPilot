@@ -29,20 +29,34 @@ public class UserService(PmsDbContext pmsDbContext)
             .Take(pageSize)
             .ToListAsync();
 
-        var usersResponses = users.Select(user => new UserResponse
+        var userResponses = new List<UserResponse>();
+
+        foreach (var user in users)
         {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            Role = user.Role,
-            HasAccess = user.HasAccess,
-            LastLogin = user.LastLogin,
-            CreatedOn = user.CreatedOn
-        }).ToList();
+            var monetaryAccountName = await pmsDbContext
+                .MonetaryAccounts
+                .Where(x => x.UserId == user.Id)
+                .Select(x => x.AccountName)
+                .FirstOrDefaultAsync();
+
+            var userResponse = new UserResponse
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role,
+                HasAccess = user.HasAccess,
+                MonetaryAccountName = monetaryAccountName!,
+                LastLogin = user.LastLogin,
+                CreatedOn = user.CreatedOn
+            };
+
+            userResponses.Add(userResponse);
+        }
 
         return new PaginatedResult<UserResponse>
         {
-            Items = usersResponses,
+            Items = userResponses,
             TotalItems = totalUsers,
             PageNumber = pageNumber,
             PageSize = pageSize,

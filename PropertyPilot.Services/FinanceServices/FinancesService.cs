@@ -578,6 +578,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
             .Tenancies
             .Where(x => x.IsRenewable)
             .ToListAsync();
+
         foreach (var tenancy in tenancies)
         {
             var invoice = await pmsDbContext
@@ -585,43 +586,42 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
                 .Where(x => x.TenancyId == tenancy.Id)
                 .OrderByDescending(x => x.CreatedAt)
                 .FirstOrDefaultAsync();
-            if (invoice == null)
-                continue;
 
-            // Ensure we're working with UTC dates
-            DateTime dueDate = DateTime.SpecifyKind(
-                invoice.DateStart.AddDays((double)tenancy.RenewalPeriodInDays!),
-                DateTimeKind.Utc);
+            if (invoice == null) continue;
 
-            if (DateTime.UtcNow >= dueDate)
+            DateTime nextDateStart;
+            int renewalDays = (int)tenancy.RenewalPeriodInDays!;
+
+            // Calculate next renewal date
+            if (renewalDays == 30)
             {
-                DateTime nextDateStart;
-                // Check if the current DateStart is the first day of the month
-                if (invoice.DateStart.Day == 1)
-                {
-                    int daysInMonth = DateTime.DaysInMonth(invoice.DateStart.Year, invoice.DateStart.Month);
-                    // If RenewalPeriodInDays matches the days in the month, set to next month's first day
-                    if (tenancy.RenewalPeriodInDays == daysInMonth)
-                    {
-                        nextDateStart = DateTime.SpecifyKind(
-                            invoice.DateStart.AddMonths(1),
-                            DateTimeKind.Utc);
-                    }
-                    else
-                    {
-                        nextDateStart = dueDate;
-                    }
-                }
-                else
-                {
-                    nextDateStart = dueDate;
-                }
+                // Same day next month (handles end-of-month automatically)
+                nextDateStart = invoice.DateStart.AddMonths(1);
+            }
+            else if (invoice.DateStart.Day == 1)
+            {
+                // First-of-month logic
+                int daysInMonth = DateTime.DaysInMonth(invoice.DateStart.Year, invoice.DateStart.Month);
+                nextDateStart = renewalDays == daysInMonth
+                    ? invoice.DateStart.AddMonths(1)
+                    : invoice.DateStart.AddDays(renewalDays);
+            }
+            else
+            {
+                // Regular daily renewal
+                nextDateStart = invoice.DateStart.AddDays(renewalDays);
+            }
 
+            // Ensure UTC datetime
+            nextDateStart = DateTime.SpecifyKind(nextDateStart, DateTimeKind.Utc);
+
+            if (DateTime.UtcNow >= nextDateStart)
+            {
+                // Create new invoice
                 var invoiceItems = await pmsDbContext
                     .InvoiceItems
                     .Where(x => x.InvoiceId == invoice.Id)
                     .ToListAsync();
-
 
                 var newInvoice = new Invoice
                 {
@@ -634,22 +634,23 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
                 };
 
                 pmsDbContext.Invoices.Add(newInvoice);
-                await pmsDbContext.SaveChangesAsync();
+                await pmsDbContext.SaveChangesAsync();  // Save to get new invoice ID
 
+                // Copy invoice items
                 foreach (var invoiceItem in invoiceItems)
                 {
-                    var invoiceItemToCreate = new InvoiceItem
+                    pmsDbContext.InvoiceItems.Add(new InvoiceItem
                     {
                         Description = invoiceItem.Description,
                         Amount = invoiceItem.Amount,
                         InvoiceId = newInvoice.Id,
                         CreatedAt = DateTime.UtcNow
-                    };
-                    pmsDbContext.InvoiceItems.Add(invoiceItemToCreate);
+                    });
                 }
                 await pmsDbContext.SaveChangesAsync();
             }
         }
+
         logger.LogInformation("Processed {Count} tenancies", tenancies.Count);
     }
 
