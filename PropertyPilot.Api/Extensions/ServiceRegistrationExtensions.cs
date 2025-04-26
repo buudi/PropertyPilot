@@ -1,4 +1,5 @@
-﻿using PropertyPilot.Services.ContractsServices;
+﻿using PropertyPilot.Services.CaretakerPortalServices;
+using PropertyPilot.Services.ContractsServices;
 using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.HostedServices;
 using PropertyPilot.Services.JwtServices;
@@ -27,6 +28,7 @@ public static class ServiceRegistrationExtensions
         services.AddScoped<TenantService>();
         services.AddScoped<LookupService>();
         services.AddScoped<FinancesService>();
+        services.AddScoped<CaretakerPortalService>();
 
         services.AddSingleton<IHostedService, InvoiceRenewHostedService>();
     }
