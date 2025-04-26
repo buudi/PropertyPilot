@@ -90,9 +90,13 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthPolicies.AdminManagerOnly, policy => policy.RequireRole
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager));
+
+    options.AddPolicy(AuthPolicies.CaretakerOnly, policy => policy.RequireRole(PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Caretaker));
+
     options.AddPolicy(AuthPolicies.ManagerAndAbove, policy => policy.RequireRole
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager,
             PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Manager));
+
     options.AddPolicy(AuthPolicies.AllRoles, policy => policy.RequireRole
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager,
             PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Manager,
