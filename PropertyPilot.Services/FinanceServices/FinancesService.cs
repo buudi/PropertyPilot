@@ -13,8 +13,8 @@ namespace PropertyPilot.Services.FinanceServices;
 public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService> logger)
 {
     private const double Tolerance = 1.0;
-    private readonly Guid _mainMonetaryAccountGuid = Guid.Parse("7e174c5d-3756-4f9d-87b3-8f5e59f7f69e");
-    private readonly Guid _stripeMonetaryAccountGuid = Guid.Parse("d24bde15-7ab2-46e9-9852-d99b51bc5e19");
+    private readonly Guid _mainMonetaryAccountGuid = Guid.Parse("7e174c5d-3756-4f9d-87b3-8f5e59f7f69e"); // temporarily hardcoded
+    private readonly Guid _stripeMonetaryAccountGuid = Guid.Parse("d24bde15-7ab2-46e9-9852-d99b51bc5e19"); // temporarily hardcoded
 
     private async Task<bool> IsInvoicePaid(Invoice invoice)
     {
