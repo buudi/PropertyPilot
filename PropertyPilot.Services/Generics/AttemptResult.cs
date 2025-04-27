@@ -12,28 +12,12 @@ public class AttemptResult<T>
         Value = value;
     }
 
-    public AttemptResult(int errorCode, string? errorMessage = null)
+    public AttemptResult(int? errorCode, string? errorMessage = null)
     {
         ErrorCode = errorCode;
         ErrorMessage = errorMessage;
     }
 }
-
-//public static class Attempt
-//{
-//    public static AttemptResult<T> Execute<T>(Func<T> action, Func<Exception, int> errorHandler)
-//    {
-//        try
-//        {
-//            return new AttemptResult<T>(action());
-//        }
-//        catch (Exception ex)
-//        {
-//            return new AttemptResult<T>(errorHandler(ex));
-//        }
-//    }
-//}
-
 //
 // Attempt Usage Example
 //var result = Attempt.Execute(

@@ -238,9 +238,15 @@ public class FinancesController(FinancesService financesService) : ControllerBas
     [HttpPost("expenses")]
     public async Task<IActionResult> RecordExpense(CreateExpenseRequest createExpenseRequest)
     {
-        var expense = await financesService.RecordExpenseAsync(createExpenseRequest);
 
-        return StatusCode(201, expense);
+        var recordExpenseAttempt = await financesService.RecordExpenseAsync(createExpenseRequest);
+
+        if (recordExpenseAttempt.IsSuccess == false)
+        {
+            return StatusCode(recordExpenseAttempt.ErrorCode!.Value, new { message = recordExpenseAttempt.ErrorMessage });
+        }
+
+        return StatusCode(201, recordExpenseAttempt);
     }
 
     /// <summary>

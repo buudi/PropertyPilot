@@ -27,7 +27,8 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         return rentPaymentsSum - Tolerance > invoiceTotalAmount;
     }
 
-    private async Task<MonetaryAccount> UpdateAccountBalance(Transaction transaction)
+
+    private async Task<AttemptResult<MonetaryAccount>> UpdateAccountBalance(Transaction transaction)
     {
         var sourceAccount = transaction.SourceAccountId.HasValue
             ? await pmsDbContext
@@ -45,7 +46,10 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
 
         if (sourceAccount != null)
         {
-            if (sourceAccount.Balance < transaction.Amount - Tolerance) throw new InvalidOperationException("Insufficient balance in the source account.");
+            if (sourceAccount.Balance < transaction.Amount - Tolerance)
+            {
+                return new AttemptResult<MonetaryAccount>(402, "Payment Required! Insufficient balance in the source account.");
+            }
 
             sourceAccount.Balance -= transaction.Amount;
             //pmsDbContext.MonetaryAccounts.Update(sourceAccount);
@@ -59,7 +63,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
 
         await pmsDbContext.SaveChangesAsync();
 
-        return destinationAccount ?? sourceAccount!;
+        return new AttemptResult<MonetaryAccount>(destinationAccount ?? sourceAccount!);
     }
 
     private async Task<TransactionListingRecord> CreateTransactionListingRecordAsync(Transaction transaction)
@@ -456,7 +460,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         };
     }
 
-    public async Task<ExpenseTransactionRecord> RecordExpenseAsync(CreateExpenseRequest createExpenseRequest)
+    public async Task<AttemptResult<ExpenseTransactionRecord>> RecordExpenseAsync(CreateExpenseRequest createExpenseRequest)
     {
         var paidByAccountId = await pmsDbContext.MonetaryAccounts
             .Where(x => x.UserId == createExpenseRequest.PaidByUserId)
@@ -489,18 +493,24 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
             pmsDbContext.Transactions.Add(transaction);
             await pmsDbContext.SaveChangesAsync();
 
-            await UpdateAccountBalance(transaction);
+            var updateBalanceAttempt = await UpdateAccountBalance(transaction);
+            if (!updateBalanceAttempt.IsSuccess)
+            {
+                await dbTransaction.RollbackAsync();
+                return new AttemptResult<ExpenseTransactionRecord>(updateBalanceAttempt.ErrorCode, updateBalanceAttempt.ErrorMessage);
+            }
+
 
             await dbTransaction.CommitAsync();
 
-            return await expense.AsExpenseTransactionRecord(pmsDbContext);
+            var expenseRecord = await expense.AsExpenseTransactionRecord(pmsDbContext);
+            return new AttemptResult<ExpenseTransactionRecord>(expenseRecord);
         }
         catch
         {
             await dbTransaction.RollbackAsync();
             throw;
         }
-
     }
 
     public async Task<Transaction> RecordTransferAsync(CreateTransferRequest request)
