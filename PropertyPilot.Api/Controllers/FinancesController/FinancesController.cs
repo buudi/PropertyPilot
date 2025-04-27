@@ -194,7 +194,7 @@ public class FinancesController(FinancesService financesService) : ControllerBas
             return CreatedAtAction(nameof(GetRentPaymentTransactionRecord),
                 new
                 {
-                    rentPaymentId = rentPaymentResult.Value.RentPayment.Id
+                    rentPaymentId = rentPaymentResult.Value!.RentPayment.Id
                 },
                 rentPaymentResult.Value.RentPayment
             );
@@ -202,14 +202,14 @@ public class FinancesController(FinancesService financesService) : ControllerBas
 
         switch (rentPaymentResult.ErrorCode)
         {
+            case 400:
+                return BadRequest(new { message = rentPaymentResult.ErrorMessage });
             case 404:
                 return NotFound(new { message = rentPaymentResult.ErrorMessage });
             case 409:
                 return Conflict(new { message = rentPaymentResult.ErrorMessage });
-            case 400:
-                return BadRequest(new { message = rentPaymentResult.ErrorMessage });
             default:
-                return StatusCode(rentPaymentResult.ErrorCode.Value, new { message = rentPaymentResult.ErrorMessage });
+                return StatusCode(rentPaymentResult.ErrorCode!.Value, new { message = rentPaymentResult.ErrorMessage });
         }
     }
 
@@ -258,9 +258,13 @@ public class FinancesController(FinancesService financesService) : ControllerBas
     [HttpPost("transfers")]
     public async Task<IActionResult> RecordTransfer(CreateTransferRequest createTransferRequest)
     {
-        var transfer = await financesService.RecordTransferAsync(createTransferRequest);
+        var transferAttempt = await financesService.RecordTransferAsync(createTransferRequest);
+        if (transferAttempt.IsSuccess == false)
+        {
+            return StatusCode(transferAttempt.ErrorCode!.Value, new { message = transferAttempt.ErrorMessage });
+        }
 
-        return StatusCode(201, transfer);
+        return StatusCode(201, transferAttempt);
     }
 
     /// <summary>

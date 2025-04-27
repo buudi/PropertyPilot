@@ -351,7 +351,13 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
             pmsDbContext.Transactions.Add(transaction);
             await pmsDbContext.SaveChangesAsync();
 
-            await UpdateAccountBalance(transaction);
+            var updateBalanceAttempt = await UpdateAccountBalance(transaction);
+            if (!updateBalanceAttempt.IsSuccess)
+            {
+                await dbTransaction.RollbackAsync();
+                return new AttemptResult<RentPaymentTransactionRecord>(updateBalanceAttempt.ErrorCode, updateBalanceAttempt.ErrorMessage);
+            }
+
             await UpdateInvoiceStatus(request.InvoiceId);
 
             await dbTransaction.CommitAsync();
@@ -513,7 +519,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         }
     }
 
-    public async Task<Transaction> RecordTransferAsync(CreateTransferRequest request)
+    public async Task<AttemptResult<Transaction>> RecordTransferAsync(CreateTransferRequest request)
     {
         var transaction = new Transaction
         {
@@ -530,11 +536,16 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
             pmsDbContext.Transactions.Add(transaction);
             await pmsDbContext.SaveChangesAsync();
 
-            await UpdateAccountBalance(transaction);
+            var updateBalanceAttempt = await UpdateAccountBalance(transaction);
+            if (!updateBalanceAttempt.IsSuccess)
+            {
+                await dbTransaction.RollbackAsync();
+                return new AttemptResult<Transaction>(updateBalanceAttempt.ErrorCode, updateBalanceAttempt.ErrorMessage);
+            }
 
             await dbTransaction.CommitAsync();
 
-            return transaction;
+            return new AttemptResult<Transaction>(transaction);
         }
         catch
         {
