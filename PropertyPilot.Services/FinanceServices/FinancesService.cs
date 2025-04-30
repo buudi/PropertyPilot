@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.Constants;
 using PropertyPilot.Services.Extensions;
 using PropertyPilot.Services.FinanceServices.Models;
 using PropertyPilot.Services.Generics;
@@ -13,8 +14,8 @@ namespace PropertyPilot.Services.FinanceServices;
 public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService> logger)
 {
     private const double Tolerance = 1.0;
-    private readonly Guid _mainMonetaryAccountGuid = Guid.Parse("7e174c5d-3756-4f9d-87b3-8f5e59f7f69e"); // temporarily hardcoded
-    private readonly Guid _stripeMonetaryAccountGuid = Guid.Parse("d24bde15-7ab2-46e9-9852-d99b51bc5e19"); // temporarily hardcoded
+    private readonly Guid _mainMonetaryAccountGuid = Keys.MainMonetaryAccountGuid;
+    private readonly Guid _stripeMonetaryAccountGuid = Keys.StripeMonetaryAccountGuid;
 
     private async Task<bool> IsInvoicePaid(Invoice invoice)
     {
@@ -673,6 +674,103 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         }
 
         logger.LogInformation("Processed {Count} tenancies", tenancies.Count);
+    }
+
+    public async Task<PropertyListing?> GetPropertyListingFromRentPayment(Guid rentPaymentId)
+    {
+
+        var rentPayment = await pmsDbContext
+            .RentPayments
+            .Where(x => x.Id == rentPaymentId)
+            .FirstOrDefaultAsync();
+
+        if (rentPayment == null)
+        {
+            return null;
+        }
+
+        var invoice = await pmsDbContext
+        .Invoices
+        .Where(x => x.Id == rentPayment.InvoiceId)
+        .FirstOrDefaultAsync();
+
+        if (invoice == null)
+        {
+            return null;
+        }
+
+        var tenancy = await pmsDbContext
+            .Tenancies
+            .Where(x => x.Id == invoice.TenancyId)
+            .FirstOrDefaultAsync();
+
+        if (tenancy == null)
+        {
+            return null;
+        }
+
+        var propertyListing = await pmsDbContext
+        .PropertyListings
+        .Where(x => x.Id == tenancy.PropertyListingId)
+        .FirstOrDefaultAsync();
+
+        if (propertyListing == null)
+        {
+            return null;
+        }
+
+        return propertyListing;
+    }
+
+    public async Task<Tenant?> GetTenantFromRentPayment(Guid rentPaymentId)
+    {
+        var rentPayment = await pmsDbContext
+            .RentPayments
+            .Where(x => x.Id == rentPaymentId)
+            .FirstOrDefaultAsync();
+
+        if (rentPayment == null)
+        {
+            return null;
+        }
+
+        var tenant = await pmsDbContext
+            .Tenants
+            .Where(x => x.Id == rentPayment.TenantId)
+            .FirstOrDefaultAsync();
+
+        if (tenant == null)
+        {
+            return null;
+        }
+
+        return tenant;
+    }
+
+    public async Task<PropertyListing?> GetPropertyLisitngFromExpense(Guid expenseId)
+    {
+
+        var expense = await pmsDbContext
+            .Expenses
+            .Where(x => x.Id == expenseId)
+            .FirstOrDefaultAsync();
+
+        if (expense == null)
+        {
+            return null;
+        }
+
+        var propertyListing = await pmsDbContext
+            .PropertyListings
+            .Where(x => x.Id == expense.PropertyListingId)
+            .FirstOrDefaultAsync();
+
+        if (propertyListing == null)
+        {
+            return null;
+        }
+
+        return propertyListing;
     }
 
 }

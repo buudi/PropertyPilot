@@ -26,4 +26,18 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
 
         return Ok(homeScreen);
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("finances-screen")]
+    public async Task<IActionResult> GetFinancesScreen()
+    {
+        var userId = HttpContext.GetUserId();
+        var financesScreen = await caretakerPortalService.CaretakerPortalFinancesScreen(userId);
+
+        return Ok(financesScreen);
+    }
 }
