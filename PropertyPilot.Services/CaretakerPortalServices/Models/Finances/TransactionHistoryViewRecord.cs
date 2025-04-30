@@ -2,6 +2,7 @@
 
 public class TransactionHistoryViewRecord
 {
+    public Guid TransactionId { get; set; } // this is the transaction id in the database
     public string? TransactionType { get; set; }
     public string? ReferenceId { get; set; }
 

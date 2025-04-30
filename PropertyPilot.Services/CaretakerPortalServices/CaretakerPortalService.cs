@@ -117,6 +117,7 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
 
             var transactionHistoryRecord = new TransactionHistoryViewRecord
             {
+                TransactionId = transactionRecord.Id,
                 TransactionType = transactionRecord.TransactionType,
                 ReferenceId = transactionRecord.ReferenceId.ToString(),
                 ReferenceText = referenceText,
