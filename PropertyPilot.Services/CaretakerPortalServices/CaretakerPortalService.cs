@@ -76,6 +76,7 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
         var transactions = await pmsDbContext
             .Transactions
             .Where(x => x.SourceAccountId == monetaryAccount!.Id || x.DestinationAccountId == monetaryAccount.Id)
+            .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
 
         var collectedThisMonth = transactions
