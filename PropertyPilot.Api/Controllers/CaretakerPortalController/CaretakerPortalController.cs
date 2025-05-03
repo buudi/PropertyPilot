@@ -34,10 +34,10 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
     /// <returns></returns>
     [Authorize(Policy = AuthPolicies.CaretakerOnly)]
     [HttpGet("finances-screen")]
-    public async Task<IActionResult> GetFinancesScreen()
+    public async Task<IActionResult> GetFinancesScreen([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1)
     {
         var userId = HttpContext.GetUserId();
-        var financesScreen = await caretakerPortalService.CaretakerPortalFinancesScreen(userId);
+        var financesScreen = await caretakerPortalService.CaretakerPortalFinancesScreen(userId, pageSize, pageNumber);
 
         return Ok(financesScreen);
     }

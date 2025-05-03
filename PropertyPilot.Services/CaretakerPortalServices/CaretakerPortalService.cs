@@ -63,7 +63,7 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
         return response;
     }
 
-    public async Task<CaretakerPortalFinancesScreen> CaretakerPortalFinancesScreen(Guid userId)
+    public async Task<CaretakerPortalFinancesScreen> CaretakerPortalFinancesScreen(Guid userId, int pageSize, int pageNumber = 1)
     {
         var caretaker = await pmsDbContext
             .PropertyPilotUsers
@@ -75,20 +75,27 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
             .Where(x => x.UserId == userId)
             .FirstOrDefaultAsync();
 
-        var transactions = await pmsDbContext
+        var transactionsQuery = pmsDbContext
             .Transactions
-            .Where(x => x.SourceAccountId == monetaryAccount!.Id || x.DestinationAccountId == monetaryAccount.Id)
+            .Where(x => x.SourceAccountId == monetaryAccount!.Id || x.DestinationAccountId == monetaryAccount.Id);
+
+        var totalItems = await transactionsQuery.CountAsync();
+        var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+        var transactionsPaginated = await transactionsQuery
             .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        var collectedThisMonth = transactions
+        var collectedThisMonth = transactionsPaginated
             .Where(x => x.CreatedAt.Month == DateTime.UtcNow.Month && x.CreatedAt.Year == DateTime.UtcNow.Year)
             .Where(x => x.DestinationAccountId == monetaryAccount!.Id)
             .Where(x => x.TransactionType == Transaction.TransactionTypes.RentPayment)
             .Sum(x => x.Amount);
 
         var transactionHistoryRecords = new List<TransactionHistoryViewRecord>();
-        foreach (var transaction in transactions)
+        foreach (var transaction in transactionsPaginated)
         {
             var transactionRecord = await transaction.AsTransactionRecord(pmsDbContext);
 
@@ -133,11 +140,20 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
             transactionHistoryRecords.Add(transactionHistoryRecord);
         }
 
+        var paginatedHistoryRecords = new PaginatedResult<TransactionHistoryViewRecord>
+        {
+            Items = transactionHistoryRecords,
+            TotalItems = totalItems,
+            PageSize = pageSize,
+            PageNumber = pageNumber,
+            TotalPages = totalPages
+        };
+
         var response = new CaretakerPortalFinancesScreen
         {
             CurrentBalance = monetaryAccount!.Balance,
             CollectedThisMonth = collectedThisMonth,
-            TransactionHistoryRecords = transactionHistoryRecords
+            TransactionHistoryRecords = paginatedHistoryRecords
         };
 
         return response;
