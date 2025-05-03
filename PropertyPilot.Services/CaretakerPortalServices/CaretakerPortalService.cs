@@ -7,6 +7,8 @@ using PropertyPilot.Services.CaretakerPortalServices.Models.Responses;
 using PropertyPilot.Services.Constants;
 using PropertyPilot.Services.Extensions;
 using PropertyPilot.Services.FinanceServices;
+using PropertyPilot.Services.FinanceServices.Models;
+using PropertyPilot.Services.Generics;
 
 namespace PropertyPilot.Services.CaretakerPortalServices;
 
@@ -140,4 +142,23 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
 
         return response;
     }
+
+    public async Task<AttemptResult<Transaction>> RecordDeposit(Guid userId, double amount)
+    {
+        var monetaryAccount = await pmsDbContext
+            .MonetaryAccounts
+            .Where(x => x.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        var transferRequest = new CreateTransferRequest
+        {
+            SourceAccountId = monetaryAccount!.Id,
+            DestinationAccountId = Keys.MainMonetaryAccountGuid,
+            Amount = amount
+        };
+
+        var attemptResult = await financesService.RecordTransferAsync(transferRequest);
+        return attemptResult;
+    }
+
 }
