@@ -43,6 +43,7 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
 
             var assignedApartmentResponse = new AssignedApartment
             {
+                Id = apartment?.Id ?? Guid.Empty,
                 PropertyName = apartment?.PropertyName ?? string.Empty,
                 PropertyAddress = apartment?.Emirate ?? string.Empty,
                 VacanciesCount = 3, // Placeholder value
