@@ -4,6 +4,7 @@ using PropertyPilot.Api.Constants;
 using PropertyPilot.Api.Extensions;
 using PropertyPilot.Services.CaretakerPortalServices;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Finances;
+using PropertyPilot.Services.CaretakerPortalServices.Models.Settings;
 
 namespace PropertyPilot.Api.Controllers.CaretakerPortalController;
 
@@ -62,5 +63,34 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         return Ok(recordDepositAttempt.Value);
     }
 
+    /// <summary>
+    /// Get the caretaker's profile information
+    /// Name, email, phone number, member since
+    /// </summary>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("settings/profile")]
+    public async Task<IActionResult> GetCaretakerProfile()
+    {
+        var userId = HttpContext.GetUserId();
+        var caretakerProfile = await caretakerPortalService.CaretakerPortalProfile(userId);
+
+        return Ok(caretakerProfile);
+    }
+
+    /// <summary>
+    /// Edit the caretaker's profile information
+    /// </summary>
+    /// <param name="editCaretakerProfile"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpPut("settings/profile")]
+    public async Task<IActionResult> EditCaretakerProfile([FromBody] EditCaretakerProfile editCaretakerProfile)
+    {
+        var userId = HttpContext.GetUserId();
+        await caretakerPortalService.EditCaretakerProfile(userId, editCaretakerProfile);
+
+        return NoContent();
+    }
 
 }

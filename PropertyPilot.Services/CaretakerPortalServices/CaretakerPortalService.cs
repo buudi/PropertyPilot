@@ -4,6 +4,7 @@ using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.CaretakerPortalServices.Models;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Finances;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Responses;
+using PropertyPilot.Services.CaretakerPortalServices.Models.Settings;
 using PropertyPilot.Services.Constants;
 using PropertyPilot.Services.Extensions;
 using PropertyPilot.Services.FinanceServices;
@@ -177,4 +178,34 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
         return attemptResult;
     }
 
+    public async Task<CaretakerSettingsProfile> CaretakerPortalProfile(Guid userId)
+    {
+        var caretaker = await pmsDbContext
+            .PropertyPilotUsers
+            .Where(x => x.Id == userId)
+            .FirstOrDefaultAsync();
+        var response = new CaretakerSettingsProfile
+        {
+            Name = caretaker?.Name ?? string.Empty,
+            Email = caretaker?.Email ?? string.Empty,
+            PhoneNumber = "+971 50 123 4567", // Placeholder value
+            MemberSince = caretaker?.CreatedOn.ToString("dd/MM/yyyy") ?? string.Empty
+        };
+        return response;
+    }
+
+    public async Task EditCaretakerProfile(Guid userId, EditCaretakerProfile editCaretakerProfile)
+    {
+        var caretaker = await pmsDbContext
+            .PropertyPilotUsers
+            .Where(x => x.Id == userId)
+            .FirstOrDefaultAsync();
+        if (caretaker != null)
+        {
+            caretaker.Name = editCaretakerProfile.Name;
+            caretaker.Email = editCaretakerProfile.Email;
+            // todo: update phone number
+            await pmsDbContext.SaveChangesAsync();
+        }
+    }
 }
