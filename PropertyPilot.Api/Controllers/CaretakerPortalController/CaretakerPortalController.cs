@@ -5,6 +5,8 @@ using PropertyPilot.Api.Extensions;
 using PropertyPilot.Services.CaretakerPortalServices;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Finances;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Settings;
+using PropertyPilot.Services.TenantServices;
+using PropertyPilot.Services.TenantServices.Models;
 
 namespace PropertyPilot.Api.Controllers.CaretakerPortalController;
 
@@ -13,7 +15,7 @@ namespace PropertyPilot.Api.Controllers.CaretakerPortalController;
 /// </summary>
 [Route("api/caretaker-portal")]
 [ApiController]
-public class CaretakerPortalController(CaretakerPortalService caretakerPortalService) : ControllerBase
+public class CaretakerPortalController(CaretakerPortalService caretakerPortalService, TenantService tenantService) : ControllerBase
 {
     /// <summary>
     /// 
@@ -107,6 +109,19 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         return Ok(tenantTabListing);
     }
 
+    /// <summary>
+    /// Add a new tenant
+    /// </summary>
+    /// <param name="tenantCreateRequest"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpPost("tenants")]
+    public async Task<IActionResult> AddNewTenant([FromBody] TenantCreateRequest tenantCreateRequest)
+    {
+        var newTenant = await tenantService.CreateTenantAsync(tenantCreateRequest);
+
+        return StatusCode(201, new { tenantId = newTenant.Id });
+    }
 }
 
 
