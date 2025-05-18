@@ -93,4 +93,20 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         return NoContent();
     }
 
+    /// <summary>
+    /// Get properties Tenant tab listing
+    /// </summary>
+    /// <param name="propertyId"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/{propertyId:guid}/tenants")]
+    public async Task<IActionResult> GetPropertiesTenantTabListing([FromRoute] Guid propertyId)
+    {
+        var tenantTabListing = await caretakerPortalService.GetPropertiesTenantTabListing(propertyId);
+
+        return Ok(tenantTabListing);
+    }
+
 }
+
+

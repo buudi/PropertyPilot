@@ -3,6 +3,7 @@ using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.CaretakerPortalServices.Models;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Finances;
+using PropertyPilot.Services.CaretakerPortalServices.Models.Properties;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Responses;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Settings;
 using PropertyPilot.Services.Constants;
@@ -208,5 +209,69 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
             // todo: update phone number
             await pmsDbContext.SaveChangesAsync();
         }
+    }
+
+    public async Task<List<TenantTabListing>> GetPropertiesTenantTabListing(Guid propertyId)
+    {
+        var tenancies = await pmsDbContext
+            .Tenancies
+            .Where(x => x.IsTenancyActive == true)
+            .Where(x => x.PropertyListingId == propertyId)
+            .ToListAsync();
+
+        var tenantTabListings = new List<TenantTabListing>();
+
+        foreach (var tenancy in tenancies)
+        {
+            var tenant = await pmsDbContext
+                .Tenants
+                .Where(x => x.Id == tenancy.TenantId)
+                .FirstOrDefaultAsync();
+
+            if (tenant == null)
+            {
+                continue; // Skip if tenant is not found
+            }
+
+            var subUnitIdentifierName = await pmsDbContext
+                .SubUnits
+                .Where(x => x.Id == tenancy.SubUnitId)
+                .Select(x => x.IdentifierName)
+                .FirstOrDefaultAsync();
+
+            // Calculate the next lease renewal date tenancy.RenewalPeriodInDays + todays date
+            DateTime? nextLeaseRenewDate = null;
+            if (tenancy.IsRenewable == true && tenancy.RenewalPeriodInDays != null)
+            {
+                nextLeaseRenewDate = DateTime.UtcNow.AddDays((double)tenancy.RenewalPeriodInDays);
+            }
+
+            var isLeavingThisMonth = false;
+
+            if (tenancy.TenancyEnd != null)
+            {
+                var today = DateTime.UtcNow.Date;
+                var endDate = ((DateTime)tenancy.TenancyEnd).Date;
+                isLeavingThisMonth = endDate.Month == today.Month && endDate.Year == today.Year;
+            }
+
+            var tenantOutstanding = await financesService.IsTenantOutstanding(tenant.Id);
+
+            var tenantTabListing = new TenantTabListing()
+            {
+                Name = tenant.Name,
+                UnitNumber = subUnitIdentifierName ?? "no sub unit",
+                LeaseEndDateTime = tenancy.TenancyEnd,
+                IsLeaseAutoRenewable = tenancy.IsRenewable,
+                NextLeaseRenewDate = nextLeaseRenewDate,
+                IsLeavingThisMonth = isLeavingThisMonth,
+                HasOutstandingBalance = tenantOutstanding.IsOutstanding,
+                AmountDue = tenantOutstanding.OutstandingAmount
+            };
+
+            tenantTabListings.Add(tenantTabListing);
+        }
+
+        return tenantTabListings;
     }
 }

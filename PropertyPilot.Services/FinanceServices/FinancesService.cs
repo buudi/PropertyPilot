@@ -773,4 +773,31 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         return propertyListing;
     }
 
+    public async Task<IsTenantOutstanding> IsTenantOutstanding(Guid tenantId)
+    {
+        var invoices = await pmsDbContext.Invoices
+            .Where(x => x.TenantId == tenantId)
+            .ToListAsync();
+
+        var outstandingInvoices = invoices
+            .Where(x => x.InvoiceStatus == Invoice.InvoiceStatuses.Outstanding || x.InvoiceStatus == Invoice.InvoiceStatuses.Pending)
+            .ToList();
+
+        var totalOutstandingAmount = 0.0;
+        foreach (var invoice in outstandingInvoices)
+        {
+            var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+            totalOutstandingAmount += invoiceTotalAmount;
+        }
+
+        var isTenantOutstanding = new IsTenantOutstanding
+        {
+
+            IsOutstanding = outstandingInvoices.Count > 0,
+            OutstandingAmount = totalOutstandingAmount
+        };
+
+        return isTenantOutstanding;
+    }
+
 }
