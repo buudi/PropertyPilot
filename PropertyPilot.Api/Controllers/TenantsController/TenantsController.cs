@@ -51,6 +51,7 @@ public class TenantsController(TenantService tenantService) : ControllerBase
     /// </summary>
     /// <param name="tenantCreateRequest"></param>
     /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.AllRoles)]
     [HttpPost]
     public async Task<IActionResult> CreateTenant(TenantCreateRequest tenantCreateRequest)
     {
