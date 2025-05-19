@@ -197,4 +197,20 @@ public class LookupService(PmsDbContext pmsDbContext)
 
         return lookups;
     }
+
+    public async Task<List<Tenant>> GetTenantsInProperty(Guid propertyId)
+    {
+        var tenantsIds = await pmsDbContext
+            .Tenancies
+            .Where(x => x.PropertyListingId == propertyId)
+            .DistinctBy(x => x.TenantId)
+            .Select(x => x.TenantId)
+            .ToListAsync();
+
+        var tenants = await pmsDbContext.Tenants
+            .Where(x => tenantsIds.Contains(x.Id))
+            .ToListAsync();
+
+        return tenants;
+    }
 }

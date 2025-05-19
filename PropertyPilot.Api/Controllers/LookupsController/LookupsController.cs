@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Api.Constants;
+using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.LookupServices;
 using PropertyPilot.Services.LookupServices.Models;
@@ -118,6 +119,15 @@ public class LookupsController(LookupService lookupService) : ControllerBase
     {
         var lookups = await lookupService.AssignedCaretakerPropertiesLookup(userId);
         var response = new ItemsResponse<List<AssignedCaretakerPropertiesLookup>>(lookups);
+        return Ok(response);
+    }
+
+    [Authorize(Policy = AuthPolicies.AllRoles)]
+    [HttpGet("properties/{propertyListingId:guid}/tenants")]
+    public async Task<IActionResult> GetTenantsInPropertyLookup([FromRoute] Guid propertyListingId)
+    {
+        var lookups = await lookupService.GetTenantsInProperty(propertyListingId);
+        var response = new ItemsResponse<List<Tenant>>(lookups);
         return Ok(response);
     }
 }
