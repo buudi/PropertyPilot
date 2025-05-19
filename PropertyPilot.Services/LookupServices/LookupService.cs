@@ -207,7 +207,6 @@ public class LookupService(PmsDbContext pmsDbContext)
             .Distinct()
             .ToListAsync();
 
-
         var tenants = await pmsDbContext.Tenants
             .Where(x => tenantsIds.Contains(x.Id))
             .ToListAsync();

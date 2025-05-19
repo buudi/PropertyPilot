@@ -519,6 +519,20 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
 
     // make expense
 
+    public async Task<AttemptResult<ExpenseTransactionRecord>> RecordExpenseAsync(Guid propertyId, Guid userId, RecordExpenseCaretaker request)
+    {
+        var createExpenseRequest = new CreateExpenseRequest()
+        {
+            PropertyListingId = propertyId,
+            PaidByUserId = userId,
+            Category = request.Category,
+            Description = request.Description,
+            Amount = request.Amount
+        };
+
+        return await financesService.RecordExpenseAsync(createExpenseRequest);
+    }
+
     // add an invoice
 
 }

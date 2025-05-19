@@ -244,6 +244,31 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
 
     }
 
+    /// <summary>
+    /// Record Expense Payment
+    /// </summary>
+    /// <param name="propertyId"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpPost("finances/{propertyId:guid}/record-expense")]
+    public async Task<IActionResult> RecordExpensePayment(
+        [FromRoute] Guid propertyId,
+        [FromBody] RecordExpenseCaretaker request)
+    {
+        var userId = HttpContext.GetUserId();
+
+        var recordExpenseAttempt = await caretakerPortalService.RecordExpenseAsync(propertyId, userId, request);
+
+        if (recordExpenseAttempt.IsSuccess == false)
+        {
+            return StatusCode(recordExpenseAttempt.ErrorCode!.Value, new { message = recordExpenseAttempt.ErrorMessage });
+        }
+
+        return StatusCode(201, recordExpenseAttempt);
+
+    }
+
 }
 
 
