@@ -5,6 +5,7 @@ using PropertyPilot.Api.Extensions;
 using PropertyPilot.Services.CaretakerPortalServices;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Finances;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Settings;
+using PropertyPilot.Services.FinanceServices.Models;
 using PropertyPilot.Services.TenantServices;
 using PropertyPilot.Services.TenantServices.Models;
 
@@ -210,6 +211,39 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         var result = await caretakerPortalService.GetSubunitsTab(propertyId);
         return Ok(result);
     }
+
+    /// <summary>
+    /// record rent payment
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpPost("finances/record-rent")]
+    public async Task<IActionResult> RecordRentPayment([FromBody] RentPaymentRequest request)
+    {
+        var userId = HttpContext.GetUserId();
+
+        var rentPaymentResult = await caretakerPortalService.RecordRentPayment(userId, request);
+
+        if (rentPaymentResult.IsSuccess)
+        {
+            return StatusCode(201);
+        }
+
+        switch (rentPaymentResult.ErrorCode)
+        {
+            case 400:
+                return BadRequest(new { message = rentPaymentResult.ErrorMessage });
+            case 404:
+                return NotFound(new { message = rentPaymentResult.ErrorMessage });
+            case 409:
+                return Conflict(new { message = rentPaymentResult.ErrorMessage });
+            default:
+                return StatusCode(rentPaymentResult.ErrorCode!.Value, new { message = rentPaymentResult.ErrorMessage });
+        }
+
+    }
+
 }
 
 

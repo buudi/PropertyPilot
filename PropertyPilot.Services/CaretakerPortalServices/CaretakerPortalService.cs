@@ -510,8 +510,12 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
         return subunitTabListings;
     }
 
-
     // record payment
+
+    public async Task<AttemptResult<RentPaymentTransactionRecord>> RecordRentPayment(Guid userId, RentPaymentRequest request)
+    {
+        return await financesService.RecordRentPayment(userId, request);
+    }
 
     // make expense
 
