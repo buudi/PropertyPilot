@@ -203,9 +203,10 @@ public class LookupService(PmsDbContext pmsDbContext)
         var tenantsIds = await pmsDbContext
             .Tenancies
             .Where(x => x.PropertyListingId == propertyId)
-            .DistinctBy(x => x.TenantId)
             .Select(x => x.TenantId)
+            .Distinct()
             .ToListAsync();
+
 
         var tenants = await pmsDbContext.Tenants
             .Where(x => tenantsIds.Contains(x.Id))
