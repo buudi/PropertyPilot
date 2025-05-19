@@ -147,6 +147,31 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         return Ok(result);
 
     }
+
+    /// <summary>
+    /// Get Payments Tab Listing
+    /// </summary>
+    /// <param name="propertyId"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="pageNumber"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/{propertyId:guid}/payments")]
+    public async Task<IActionResult> GetPaymentsTabListing(
+        [FromRoute] Guid propertyId,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageNumber = 1)
+    {
+        if (pageSize <= 0 || pageNumber <= 0)
+        {
+            return BadRequest("PageSize and PageNumber must be greater than zero.");
+        }
+
+        var result = await caretakerPortalService.GetPaymentsTabAsync(propertyId, pageSize, pageNumber);
+
+        return Ok(result);
+
+    }
 }
 
 

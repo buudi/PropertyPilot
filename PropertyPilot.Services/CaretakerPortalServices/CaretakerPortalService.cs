@@ -285,9 +285,9 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
             .ToListAsync();
 
         var totalItems = await pmsDbContext
-        .Invoices
-        .Where(x => tenanciesIds.Contains(x.TenancyId))
-        .CountAsync();
+            .Invoices
+            .Where(x => tenanciesIds.Contains(x.TenancyId))
+            .CountAsync();
 
         var invoices = await pmsDbContext
             .Invoices
@@ -350,6 +350,86 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
             PageNumber = pageNumber,
             TotalItems = totalItems,
             PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
+        };
+    }
+
+    public async Task<PaginatedResult<PaymentsTabListing>> GetPaymentsTabAsync(Guid propertyId, int pageSize, int pageNumber)
+    {
+        var tenanciesIds = await pmsDbContext
+            .Tenancies
+            .Where(x => x.PropertyListingId == propertyId)
+            .Select(x => x.Id)
+            .ToListAsync();
+
+        var invoicesIds = await pmsDbContext
+            .Invoices
+            .Where(x => tenanciesIds.Contains(x.TenancyId))
+            .Select(x => x.Id)
+            .ToListAsync();
+
+        var totalItems = await pmsDbContext
+            .RentPayments
+            .Where(x => x.InvoiceId != null && invoicesIds.Contains(x.InvoiceId.Value))
+            .CountAsync();
+
+        var rentPayments = await pmsDbContext
+            .RentPayments
+            .Where(x => x.InvoiceId != null && invoicesIds.Contains(x.InvoiceId.Value))
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var paymentsTabListings = new List<PaymentsTabListing>();
+        foreach (var rentPayment in rentPayments)
+        {
+            var tenant = await pmsDbContext
+                .Tenants
+                .Where(x => x.Id == rentPayment.TenantId)
+                .FirstOrDefaultAsync();
+
+            if (tenant == null)
+            {
+                continue;
+            }
+
+            var tenancyId = await pmsDbContext
+                .Invoices
+                .Where(x => x.Id == rentPayment.InvoiceId)
+                .Select(x => x.TenancyId)
+                .FirstOrDefaultAsync();
+
+            var subUnitId = await pmsDbContext
+                .Tenancies
+                .Where(x => x.Id == tenancyId)
+                .Select(x => x.SubUnitId)
+                .FirstOrDefaultAsync();
+
+
+            var subUnit = await pmsDbContext
+                .SubUnits
+                .Where(x => x.Id == subUnitId)
+                .FirstOrDefaultAsync();
+
+            var paymentsTabListing = new PaymentsTabListing()
+            {
+                PaymentId = rentPayment.Id,
+                TenantName = tenant.Name,
+                SubUnitName = subUnit!.IdentifierName,
+                PaymentDate = rentPayment.CreatedAt,
+                PaymentMethod = rentPayment.PaymentMethod
+            };
+
+            paymentsTabListings.Add(paymentsTabListing);
+        }
+
+        return new PaginatedResult<PaymentsTabListing>
+        {
+            Items = paymentsTabListings,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalItems = totalItems,
             TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
         };
     }
