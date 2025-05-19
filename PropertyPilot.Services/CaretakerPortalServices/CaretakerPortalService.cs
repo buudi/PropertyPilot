@@ -434,4 +434,43 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
         };
     }
 
+    public async Task<PaginatedResult<ExpensesTabListing>> GetExpenseTabListing(Guid propertyId, int pageSize, int pageNumber)
+    {
+        var query = pmsDbContext
+            .Expenses
+            .Where(x => x.PropertyListingId == propertyId)
+            .OrderByDescending(x => x.CreatedAt);
+
+        var totalItems = await query.CountAsync();
+
+        var expenses = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var expensesTabListings = new List<ExpensesTabListing>();
+        foreach (var expense in expenses)
+        {
+            var expenseTabListing = new ExpensesTabListing
+            {
+                ExpenseId = expense.Id,
+                ExpenseDescription = expense.Description ?? "No Description",
+                ExpenseDate = expense.CreatedAt,
+                Amount = expense.Amount,
+                Category = expense.Category
+            };
+
+            expensesTabListings.Add(expenseTabListing);
+        }
+
+        return new PaginatedResult<ExpensesTabListing>
+        {
+            Items = expensesTabListings,
+            TotalItems = totalItems,
+            PageSize = pageSize,
+            PageNumber = pageNumber,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
+        };
+    }
+
 }

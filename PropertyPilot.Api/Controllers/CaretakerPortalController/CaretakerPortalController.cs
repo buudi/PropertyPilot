@@ -172,6 +172,31 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         return Ok(result);
 
     }
+
+    /// <summary>
+    /// Get Expenses Tab Listing
+    /// </summary>
+    /// <param name="propertyId"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="pageNumber"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/{propertyId:guid}/expenses")]
+    public async Task<IActionResult> GetExpensesTabListing(
+        [FromRoute] Guid propertyId,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageNumber = 1)
+    {
+        if (pageSize <= 0 || pageNumber <= 0)
+        {
+            return BadRequest("PageSize and PageNumber must be greater than zero.");
+        }
+
+        var result = await caretakerPortalService.GetExpenseTabListing(propertyId, pageSize, pageNumber);
+
+        return Ok(result);
+
+    }
 }
 
 
