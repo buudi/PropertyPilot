@@ -231,7 +231,7 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
 
             if (tenant == null)
             {
-                continue; // Skip if tenant is not found
+                continue; // Skip if tenancy is not found
             }
 
             var subUnitIdentifierName = await pmsDbContext
@@ -472,5 +472,49 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
             TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
         };
     }
+
+    public async Task<List<SubunitsTabListing>> GetSubunitsTab(Guid propertyId)
+    {
+        var subunits = await pmsDbContext
+            .SubUnits
+            .Where(x => x.PropertyListingId == propertyId)
+            .OrderBy(x => x.IdentifierName)
+            .ToListAsync();
+
+        var subunitIds = subunits.Select(x => x.Id).ToList();
+
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(x => x.IsTenancyActive && subunitIds.Contains((Guid)x.SubUnitId!))
+            .ToListAsync();
+
+        var tenantIds = tenancies.Select(x => x.TenantId).Distinct().ToList();
+
+        var tenants = await pmsDbContext.Tenants
+            .Where(x => tenantIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id);
+
+        var subunitTabListings = subunits.Select(subunit =>
+        {
+            var tenancy = tenancies.FirstOrDefault(t => t.SubUnitId == subunit.Id);
+            tenants.TryGetValue(tenancy?.TenantId ?? Guid.Empty, out var tenant);
+
+            return new SubunitsTabListing
+            {
+                SubunitId = subunit.Id,
+                SubunitName = subunit.IdentifierName,
+                isOccupied = tenancy != null,
+                TenantName = tenant?.Name
+            };
+        }).ToList();
+
+        return subunitTabListings;
+    }
+
+
+    // record payment
+
+    // make expense
+
+    // add an invoice
 
 }

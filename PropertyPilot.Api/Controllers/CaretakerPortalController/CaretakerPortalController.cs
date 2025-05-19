@@ -197,6 +197,19 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         return Ok(result);
 
     }
+
+    /// <summary>
+    /// Get Sub Units Tab Listing
+    /// </summary>
+    /// <param name="propertyId"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/{propertyId:guid}/sub-units")]
+    public async Task<IActionResult> GetSubunitsTabListing([FromRoute] Guid propertyId)
+    {
+        var result = await caretakerPortalService.GetSubunitsTab(propertyId);
+        return Ok(result);
+    }
 }
 
 
