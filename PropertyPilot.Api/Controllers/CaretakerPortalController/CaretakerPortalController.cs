@@ -122,6 +122,31 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
 
         return StatusCode(201, new { tenantId = newTenant.Id });
     }
+
+    /// <summary>
+    /// Get Invoices Tab Listing for property
+    /// </summary>
+    /// <param name="propertyId"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="pageNumber"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/{propertyId:guid}/invoices")]
+    public async Task<IActionResult> GetInvoicesTabListing(
+        [FromRoute] Guid propertyId,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageNumber = 1)
+    {
+        if (pageSize <= 0 || pageNumber <= 0)
+        {
+            return BadRequest("PageSize and PageNumber must be greater than zero.");
+        }
+
+        var result = await caretakerPortalService.GetPropertiesInvoicesTabAsync(propertyId, pageSize, pageNumber);
+
+        return Ok(result);
+
+    }
 }
 
 
