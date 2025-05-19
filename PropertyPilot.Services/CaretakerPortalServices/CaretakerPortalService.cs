@@ -418,7 +418,8 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
                 TenantName = tenant.Name,
                 SubUnitName = subUnit!.IdentifierName,
                 PaymentDate = rentPayment.CreatedAt,
-                PaymentMethod = rentPayment.PaymentMethod
+                PaymentMethod = rentPayment.PaymentMethod,
+                PaymentAmount = rentPayment.Amount
             };
 
             paymentsTabListings.Add(paymentsTabListing);

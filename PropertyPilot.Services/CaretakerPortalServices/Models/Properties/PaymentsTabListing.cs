@@ -7,4 +7,5 @@ public class PaymentsTabListing
     public required string SubUnitName { get; set; }
     public required DateTime PaymentDate { get; set; }
     public required string PaymentMethod { get; set; }
+    public required double PaymentAmount { get; set; }
 }
