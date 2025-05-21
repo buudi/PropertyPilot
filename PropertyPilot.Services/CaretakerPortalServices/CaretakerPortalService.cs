@@ -535,5 +535,10 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
     }
 
     // add an invoice
+    public async Task<InvoiceRecord> CreateInvoiceRecord(CreateInvoiceRequest createInvoiceRequest)
+    {
+        var invoiceRecord = await financesService.CreateInvoiceRecord(createInvoiceRequest);
+        return invoiceRecord;
+    }
 
 }

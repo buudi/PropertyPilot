@@ -269,6 +269,19 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
 
     }
 
+    /// <summary>
+    /// Add Invoice
+    /// </summary>
+    /// <param name="createInvoiceRequest"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpPost("finances/add-invoice")]
+    public async Task<IActionResult> AddInvoice(CreateInvoiceRequest createInvoiceRequest)
+    {
+        var invoiceRecord = await caretakerPortalService.CreateInvoiceRecord(createInvoiceRequest);
+        return StatusCode(201, invoiceRecord);
+    }
+
 }
 
 
