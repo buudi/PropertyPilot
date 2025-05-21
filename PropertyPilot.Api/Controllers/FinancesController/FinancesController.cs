@@ -280,23 +280,3 @@ public class FinancesController(FinancesService financesService) : ControllerBas
         return StatusCode(201, invoiceRecord);
     }
 }
-
-
-// Example request body for post invoices
-//{
-//  "tenantId": "1e2ad33e-3ac1-4c68-9745-72ab6f1fb623",
-//  "tenancyId": "c8b59d0c-fb35-45f7-8a63-254909be35fa",
-//  "discount": 70,
-//  "notes": "Settlement Payment",
-//  "isRenewable": true,
-//  "invoiceItems": [
-//    {
-//      "description": "Settlement Fees",
-//      "amount": 500
-//    },
-//    {
-//    "description": "Damage Charges",
-//      "amount": 250
-//    }
-//  ]
-//}
