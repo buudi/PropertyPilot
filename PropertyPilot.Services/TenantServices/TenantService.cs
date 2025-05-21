@@ -132,7 +132,7 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
     public async Task<int> ThisMonthEvacuatingTenantsCount(Guid propertyId)
     {
         var now = DateTime.UtcNow;
-        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var startOfNextMonth = startOfMonth.AddMonths(1);
 
         var count = await pmsDbContext.Tenancies
@@ -145,5 +145,6 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
 
         return count;
     }
+
 
 }
