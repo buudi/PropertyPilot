@@ -12,10 +12,12 @@ using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.FinanceServices.Models;
 using PropertyPilot.Services.Generics;
 using PropertyPilot.Services.InvoiceServices.Models;
+using PropertyPilot.Services.PropertiesServices;
+using PropertyPilot.Services.TenantServices;
 
 namespace PropertyPilot.Services.CaretakerPortalServices;
 
-public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService financesService)
+public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService financesService, PropertiesService propertiesService, TenantService tenantService)
 {
     public async Task<CaretakerPortalHomeScreen> CaretakerPortalHomeScreen(Guid userId)
     {
@@ -43,15 +45,20 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
                 .Where(x => x.Id == apartmentId)
                 .FirstOrDefaultAsync();
 
+            var apartmentTotalOutstandingBalance = await financesService.PropertyOutstandingSum(apartmentId);
+
+            var vacanciesCount = await propertiesService.GetNumberOfVacanciesForProperty(apartmentId);
+            var leavingThisMonthCount = await tenantService.ThisMonthEvacuatingTenantsCount(apartmentId);
+
             var assignedApartmentResponse = new AssignedApartment
             {
                 Id = apartment?.Id ?? Guid.Empty,
                 PropertyName = apartment?.PropertyName ?? string.Empty,
                 PropertyAddress = apartment?.Emirate ?? string.Empty,
-                VacanciesCount = 3, // Placeholder value
+                VacanciesCount = vacanciesCount,
                 SubUnitsCount = apartment?.UnitsCount ?? 0,
-                OutstandingBalance = 300, // Placeholder value
-                TenantsLeavingThisMonth = 2 // Placeholder value
+                OutstandingBalance = apartmentTotalOutstandingBalance,
+                TenantsLeavingThisMonth = leavingThisMonthCount
             };
 
             assignedApartmentResponses.Add(assignedApartmentResponse);

@@ -800,4 +800,27 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         return isTenantOutstanding;
     }
 
+    public async Task<double> PropertyOutstandingSum(Guid propertyId)
+    {
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(t => t.PropertyListingId == propertyId)
+            .Select(t => t.Id)
+            .ToListAsync();
+
+        if (!tenancies.Any())
+            return 0.0;
+
+        var invoices = await pmsDbContext.Invoices
+            .Where(inv => tenancies.Contains(inv.TenancyId) &&
+                          (inv.InvoiceStatus == Invoice.InvoiceStatuses.Pending || inv.InvoiceStatus == Invoice.InvoiceStatuses.Outstanding))
+            .ToListAsync();
+
+        double totalOutstanding = 0.0;
+        foreach (var invoice in invoices)
+        {
+            totalOutstanding += await invoice.TotalAmountRemaining(pmsDbContext);
+        }
+
+        return totalOutstanding;
+    }
 }

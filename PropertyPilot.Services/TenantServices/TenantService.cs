@@ -128,4 +128,22 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
 
         return createdTenantListingRecords;
     }
+
+    public async Task<int> ThisMonthEvacuatingTenantsCount(Guid propertyId)
+    {
+        var now = DateTime.UtcNow;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var startOfNextMonth = startOfMonth.AddMonths(1);
+
+        var count = await pmsDbContext.Tenancies
+            .Where(t => t.PropertyListingId == propertyId &&
+                        t.IsTenancyActive &&
+                        t.EvacuationDate != null &&
+                        t.EvacuationDate >= startOfMonth &&
+                        t.EvacuationDate < startOfNextMonth)
+            .CountAsync();
+
+        return count;
+    }
+
 }

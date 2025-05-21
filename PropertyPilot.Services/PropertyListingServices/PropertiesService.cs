@@ -223,4 +223,27 @@ public class PropertiesService(PpDbContext ppDbContext, PmsDbContext pmsDbContex
             TenantsTimelineResponse = timelineTenants
         };
     }
+
+    public async Task<int> GetNumberOfVacanciesForProperty(Guid propertyId)
+    {
+        var subUnitIds = await pmsDbContext.SubUnits
+            .Where(su => su.PropertyListingId == propertyId)
+            .Select(su => su.Id)
+            .ToListAsync();
+
+        if (!subUnitIds.Any())
+            return 0;
+
+        var occupiedSubUnitIds = await pmsDbContext.Tenancies
+            .Where(t => t.PropertyListingId == propertyId &&
+                        t.IsTenancyActive &&
+                        t.SubUnitId != null)
+            .Select(t => t.SubUnitId!.Value)
+            .Distinct()
+            .ToListAsync();
+
+        var vacantCount = subUnitIds.Count(id => !occupiedSubUnitIds.Contains(id));
+        return vacantCount;
+    }
+
 }
