@@ -597,85 +597,154 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
     public async Task RenewInvoiceScheduledJob()
     {
         logger.LogInformation("RenewInvoiceScheduledJob was called at {Time}", DateTime.UtcNow);
-        var tenancies = await pmsDbContext
-            .Tenancies
-            .Where(x => x.IsRenewable)
+
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(x => x.IsRenewable && x.RenewalPeriodInDays.HasValue)
             .ToListAsync();
 
         foreach (var tenancy in tenancies)
         {
-            var invoice = await pmsDbContext
-                .Invoices
+            var lastInvoice = await pmsDbContext.Invoices
                 .Where(x => x.TenancyId == tenancy.Id)
                 .OrderByDescending(x => x.CreatedAt)
                 .FirstOrDefaultAsync();
 
-            if (invoice == null) continue;
+            if (lastInvoice == null)
+                continue;
+
+            int renewalDays = tenancy.RenewalPeriodInDays!.Value;
 
             DateTime nextDateStart;
-            int renewalDays = (int)tenancy.RenewalPeriodInDays!;
-
-            // Calculate next renewal date
             if (renewalDays == 30)
             {
-                // Same day next month (handles end-of-month automatically)
-                nextDateStart = invoice.DateStart.AddMonths(1);
+                nextDateStart = lastInvoice.DateStart.AddMonths(1);
             }
-            else if (invoice.DateStart.Day == 1)
+            else if (lastInvoice.DateStart.Day == 1)
             {
-                // First-of-month logic
-                int daysInMonth = DateTime.DaysInMonth(invoice.DateStart.Year, invoice.DateStart.Month);
+                int daysInMonth = DateTime.DaysInMonth(lastInvoice.DateStart.Year, lastInvoice.DateStart.Month);
                 nextDateStart = renewalDays == daysInMonth
-                    ? invoice.DateStart.AddMonths(1)
-                    : invoice.DateStart.AddDays(renewalDays);
+                    ? lastInvoice.DateStart.AddMonths(1)
+                    : lastInvoice.DateStart.AddDays(renewalDays);
             }
             else
             {
-                // Regular daily renewal
-                nextDateStart = invoice.DateStart.AddDays(renewalDays);
+                nextDateStart = lastInvoice.DateStart.AddDays(renewalDays);
             }
 
-            // Ensure UTC datetime
             nextDateStart = DateTime.SpecifyKind(nextDateStart, DateTimeKind.Utc);
 
-            if (DateTime.UtcNow >= nextDateStart)
+            if (DateTime.UtcNow < nextDateStart)
+                continue;
+
+            var newInvoice = new Invoice
             {
-                // Create new invoice
-                var invoiceItems = await pmsDbContext
-                    .InvoiceItems
-                    .Where(x => x.InvoiceId == invoice.Id)
-                    .ToListAsync();
+                TenancyId = tenancy.Id,
+                TenantId = tenancy.TenantId,
+                DateStart = nextDateStart,
+                InvoiceStatus = Invoice.InvoiceStatuses.Pending,
+                Notes = "Auto-generated based on tenancy rent",
+                CreatedAt = DateTime.UtcNow
+            };
 
-                var newInvoice = new Invoice
-                {
-                    TenancyId = tenancy.Id,
-                    TenantId = tenancy.TenantId,
-                    DateStart = nextDateStart,
-                    InvoiceStatus = Invoice.InvoiceStatuses.Pending,
-                    Notes = invoice.Notes,
-                    CreatedAt = DateTime.UtcNow,
-                };
+            pmsDbContext.Invoices.Add(newInvoice);
+            await pmsDbContext.SaveChangesAsync();
 
-                pmsDbContext.Invoices.Add(newInvoice);
-                await pmsDbContext.SaveChangesAsync();  // Save to get new invoice ID
+            pmsDbContext.InvoiceItems.Add(new InvoiceItem
+            {
+                Description = "Rent",
+                Amount = tenancy.AssignedRent,
+                InvoiceId = newInvoice.Id,
+                CreatedAt = DateTime.UtcNow
+            });
 
-                // Copy invoice items
-                foreach (var invoiceItem in invoiceItems)
-                {
-                    pmsDbContext.InvoiceItems.Add(new InvoiceItem
-                    {
-                        Description = invoiceItem.Description,
-                        Amount = invoiceItem.Amount,
-                        InvoiceId = newInvoice.Id,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-                await pmsDbContext.SaveChangesAsync();
-            }
+            await pmsDbContext.SaveChangesAsync();
         }
 
         logger.LogInformation("Processed {Count} tenancies", tenancies.Count);
     }
+
+    //public async Task RenewInvoiceScheduledJob()
+    //{
+    //    logger.LogInformation("RenewInvoiceScheduledJob was called at {Time}", DateTime.UtcNow);
+    //    var tenancies = await pmsDbContext
+    //        .Tenancies
+    //        .Where(x => x.IsRenewable)
+    //        .ToListAsync();
+
+    //    foreach (var tenancy in tenancies)
+    //    {
+    //        var invoice = await pmsDbContext
+    //            .Invoices
+    //            .Where(x => x.TenancyId == tenancy.Id)
+    //            .OrderByDescending(x => x.CreatedAt)
+    //            .FirstOrDefaultAsync();
+
+    //        if (invoice == null) continue;
+
+    //        DateTime nextDateStart;
+    //        int renewalDays = (int)tenancy.RenewalPeriodInDays!;
+
+    //        // Calculate next renewal date
+    //        if (renewalDays == 30)
+    //        {
+    //            // Same day next month (handles end-of-month automatically)
+    //            nextDateStart = invoice.DateStart.AddMonths(1);
+    //        }
+    //        else if (invoice.DateStart.Day == 1)
+    //        {
+    //            // First-of-month logic
+    //            int daysInMonth = DateTime.DaysInMonth(invoice.DateStart.Year, invoice.DateStart.Month);
+    //            nextDateStart = renewalDays == daysInMonth
+    //                ? invoice.DateStart.AddMonths(1)
+    //                : invoice.DateStart.AddDays(renewalDays);
+    //        }
+    //        else
+    //        {
+    //            // Regular daily renewal
+    //            nextDateStart = invoice.DateStart.AddDays(renewalDays);
+    //        }
+
+    //        // Ensure UTC datetime
+    //        nextDateStart = DateTime.SpecifyKind(nextDateStart, DateTimeKind.Utc);
+
+    //        if (DateTime.UtcNow >= nextDateStart)
+    //        {
+    //            // Create new invoice
+    //            var invoiceItems = await pmsDbContext
+    //                .InvoiceItems
+    //                .Where(x => x.InvoiceId == invoice.Id)
+    //                .ToListAsync();
+
+    //            var newInvoice = new Invoice
+    //            {
+    //                TenancyId = tenancy.Id,
+    //                TenantId = tenancy.TenantId,
+    //                DateStart = nextDateStart,
+    //                InvoiceStatus = Invoice.InvoiceStatuses.Pending,
+    //                Notes = invoice.Notes,
+    //                CreatedAt = DateTime.UtcNow,    
+    //            };
+
+    //            pmsDbContext.Invoices.Add(newInvoice);
+    //            await pmsDbContext.SaveChangesAsync();  // Save to get new invoice ID
+
+    //            // Copy invoice items
+    //            foreach (var invoiceItem in invoiceItems)
+    //            {
+    //                pmsDbContext.InvoiceItems.Add(new InvoiceItem
+    //                {
+    //                    Description = invoiceItem.Description,
+    //                    Amount = invoiceItem.Amount,
+    //                    InvoiceId = newInvoice.Id,
+    //                    CreatedAt = DateTime.UtcNow
+    //                });
+    //            }
+    //            await pmsDbContext.SaveChangesAsync();
+    //        }
+    //    }
+
+    //    logger.LogInformation("Processed {Count} tenancies", tenancies.Count);
+    //}
 
     public async Task<PropertyListing?> GetPropertyListingFromRentPayment(Guid rentPaymentId)
     {

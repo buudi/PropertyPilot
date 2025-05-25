@@ -14,7 +14,7 @@ public class Tenancy
     public Guid? SubUnitId { get; set; } // FK to SubUnit
 
     // todo: set to non-nullable after all rows are populated
-    public double? AssignedRent { get; set; }
+    public double AssignedRent { get; set; }
     public DateTime TenancyStart { get; set; }
     public DateTime? TenancyEnd { get; set; }
     public bool IsRenewable { get; set; } = false; // default value enforced in DB level
