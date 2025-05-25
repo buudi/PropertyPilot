@@ -571,4 +571,74 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
         };
     }
 
+    public async Task<TenancyInformation?> GetTenancyInformation(Guid tenancyId)
+    {
+        var tenancy = await pmsDbContext
+            .Tenancies
+            .Where(x => x.Id == tenancyId)
+            .FirstOrDefaultAsync();
+
+        if (tenancy == null)
+            return null;
+
+        var propertyName = await pmsDbContext
+            .PropertyListings
+            .Where(x => x.Id == tenancy.PropertyListingId)
+            .Select(x => x.PropertyName)
+            .FirstOrDefaultAsync();
+
+        var subUnitName = await pmsDbContext
+            .SubUnits
+            .Where(x => x.Id == tenancy.SubUnitId)
+            .Select(x => x.IdentifierName)
+            .FirstOrDefaultAsync();
+
+        var tenancyType = tenancy.IsRenewable
+            ? $"Renewable (new invoice every {tenancy.RenewalPeriodInDays} days)"
+            : $"Fixed term (ends {tenancy.TenancyEnd?.ToString("yyyy-MM-dd") ?? "unknown"})";
+
+        var tenant = await pmsDbContext
+            .Tenants
+            .Where(x => x.Id == tenancy.TenantId)
+            .FirstOrDefaultAsync();
+
+        var tenancyInformation = new TenancyInformation
+        {
+            TenancyId = tenancyId,
+            PropertyName = propertyName!,
+            SubUnitName = subUnitName,
+            IsTenancyActive = tenancy.IsTenancyActive,
+            TenancyType = tenancyType,
+            RenewalPeriodInDays = tenancy.RenewalPeriodInDays,
+            TenantPhoneNumber = tenant!.PhoneNumber,
+            TenantEmail = tenant!.Email,
+            TenancyStart = tenancy.TenancyStart,
+            TenancyEnd = tenancy.TenancyEnd,
+            EvacuationDate = tenancy.EvacuationDate
+        };
+
+        return tenancyInformation;
+    }
+
+    public async Task<TenancyTenantTabScreen?> GetTenancyTenantTabScreenAsync(Guid tenancyId)
+    {
+
+        var tenancy = await pmsDbContext
+            .Tenancies
+            .Where(x => x.Id == tenancyId)
+            .FirstOrDefaultAsync();
+
+        if (tenancy == null)
+            return null;
+
+        var financialSummary = await GetTenantFinancialSummary(tenancyId);
+        var tenancyInformation = await GetTenancyInformation(tenancyId);
+
+        return new TenancyTenantTabScreen
+        {
+            TenantFinancialSummary = financialSummary,
+            TenancyInformation = tenancyInformation!
+        };
+    }
+
 }

@@ -282,6 +282,20 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
         return StatusCode(201, invoiceRecord);
     }
 
+
+    /// <summary>
+    /// Get Tenancy Information for a specific tenancy
+    /// </summary>
+    /// <param name="tenancyId"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/tenancies/{tenancyId:guid}")]
+    public async Task<IActionResult> GetTenancyTenantTab([FromRoute] Guid tenancyId)
+    {
+        var result = await caretakerPortalService.GetTenancyTenantTabScreenAsync(tenancyId);
+        return Ok(result);
+    }
+
 }
 
 
