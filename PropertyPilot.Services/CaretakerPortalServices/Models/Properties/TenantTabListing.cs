@@ -2,6 +2,7 @@
 
 public class TenantTabListing
 {
+    public required Guid TenancyId { get; set; }
     public required string Name { get; set; }
     public required string UnitNumber { get; set; }
     public DateTime? LeaseEndDateTime { get; set; }
