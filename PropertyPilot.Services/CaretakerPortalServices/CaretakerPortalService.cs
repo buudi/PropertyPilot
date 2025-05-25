@@ -605,6 +605,8 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
         var tenancyInformation = new TenancyInformation
         {
             TenancyId = tenancyId,
+            TenantName = tenant!.Name,
+            AssignedRent = tenancy.AssignedRent,
             PropertyName = propertyName!,
             SubUnitName = subUnitName,
             IsTenancyActive = tenancy.IsTenancyActive,

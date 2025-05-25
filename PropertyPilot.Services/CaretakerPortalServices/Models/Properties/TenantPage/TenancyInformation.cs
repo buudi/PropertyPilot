@@ -3,6 +3,8 @@
 public class TenancyInformation
 {
     public Guid TenancyId { get; set; }
+    public required string TenantName { get; set; }
+    public required double AssignedRent { get; set; }
     public required string PropertyName { get; set; }
     public string? SubUnitName { get; set; } = string.Empty;
     public required bool IsTenancyActive { get; set; } // whether active or not
