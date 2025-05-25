@@ -4,6 +4,7 @@ using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.CaretakerPortalServices.Models;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Finances;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Properties;
+using PropertyPilot.Services.CaretakerPortalServices.Models.Properties.TenantPage;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Responses;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Settings;
 using PropertyPilot.Services.Constants;
@@ -549,6 +550,24 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
     {
         var invoiceRecord = await financesService.CreateInvoiceRecord(createInvoiceRequest);
         return invoiceRecord;
+    }
+
+    // get tenant financial summary
+    public async Task<TenantFinancialSummary> GetTenantFinancialSummary(Guid tenancyId)
+    {
+        var tenantOutstanding = await financesService.TenantOutstandingSum(tenancyId);
+        var totalPaid = await financesService.TenantTotalPaidRent(tenancyId);
+        var (lastPaymentDate, lastPaymentAmount) = await financesService.TenantLastPaidRentDateAndAmount(tenancyId);
+        var stayDuration = await tenantService.GetStayDuration(tenancyId);
+
+        return new TenantFinancialSummary
+        {
+            TotalOwed = tenantOutstanding,
+            TotalPaid = totalPaid,
+            LastPaymentDate = lastPaymentDate,
+            LastPaymentAmount = lastPaymentAmount,
+            StayDuration = stayDuration
+        };
     }
 
 }

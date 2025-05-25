@@ -800,6 +800,57 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         return isTenantOutstanding;
     }
 
+    public async Task<double> TenantOutstandingSum(Guid tenancyId)
+    {
+        var invoices = await pmsDbContext.Invoices
+            .Where(inv => inv.TenancyId == tenancyId &&
+                          (inv.InvoiceStatus == Invoice.InvoiceStatuses.Pending || inv.InvoiceStatus == Invoice.InvoiceStatuses.Outstanding))
+            .ToListAsync();
+
+        double totalOutstanding = 0.0;
+        foreach (var invoice in invoices)
+        {
+            totalOutstanding += await invoice.TotalAmountRemaining(pmsDbContext);
+        }
+
+        return totalOutstanding;
+    }
+
+    public async Task<double> TenantTotalPaidRent(Guid tenancyId)
+    {
+        var invoiceIds = await pmsDbContext.Invoices
+            .Where(inv => inv.TenancyId == tenancyId)
+            .Select(inv => inv.Id)
+            .ToListAsync();
+
+        var totalPaid = await pmsDbContext.RentPayments
+            .Where(rp => rp.InvoiceId.HasValue && invoiceIds.Contains(rp.InvoiceId.Value))
+            .SumAsync(rp => rp.Amount);
+
+        return totalPaid;
+    }
+
+    public async Task<(DateTime LastPaymentDate, double LastPaymentAmount)> TenantLastPaidRentDateAndAmount(Guid tenancyId)
+    {
+        var invoiceIds = await pmsDbContext.Invoices
+            .Where(inv => inv.TenancyId == tenancyId)
+            .Select(inv => inv.Id)
+            .ToListAsync();
+
+        var lastPayment = await pmsDbContext.RentPayments
+            .Where(rp => rp.InvoiceId.HasValue && invoiceIds.Contains(rp.InvoiceId.Value))
+            .OrderByDescending(rp => rp.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        if (lastPayment == null)
+        {
+            return (DateTime.MinValue, 0.0);
+        }
+
+        return (lastPayment.CreatedAt, lastPayment.Amount);
+    }
+
+
     public async Task<double> PropertyOutstandingSum(Guid propertyId)
     {
         var tenancies = await pmsDbContext.Tenancies

@@ -146,5 +146,29 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
         return count;
     }
 
+    public async Task<string> GetStayDuration(Guid tenancyId)
+    {
+        var tenancy = await pmsDbContext.Tenancies
+            .Where(t => t.Id == tenancyId)
+            .Select(t => new { t.TenancyStart, t.TenancyEnd, t.IsTenancyActive })
+            .FirstOrDefaultAsync();
+
+        if (tenancy == null)
+            return "Unknown";
+
+        var endDate = tenancy.IsTenancyActive ? DateTime.UtcNow : tenancy.TenancyEnd!.Value;
+        var duration = endDate - tenancy.TenancyStart;
+
+        var years = (int)(duration.Days / 365.25);
+        var months = (int)((duration.Days % 365.25) / 30.44);
+        var days = duration.Days - (int)(years * 365.25) - (int)(months * 30.44);
+
+        var parts = new List<string>();
+        if (years > 0) parts.Add($"{years} year{(years > 1 ? "s" : "")}");
+        if (months > 0) parts.Add($"{months} month{(months > 1 ? "s" : "")}");
+        if (days > 0) parts.Add($"{days} day{(days > 1 ? "s" : "")}");
+
+        return parts.Count > 0 ? string.Join(", ", parts) : "0 days";
+    }
 
 }
