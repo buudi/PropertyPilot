@@ -268,7 +268,7 @@ public class CaretakerPortalService(PmsDbContext pmsDbContext, FinancesService f
 
             var tenantTabListing = new TenantTabListing()
             {
-                TenancyId = tenancy.TenantId,
+                TenancyId = tenancy.Id,
                 Name = tenant.Name,
                 UnitNumber = subUnitIdentifierName ?? "no sub unit",
                 LeaseEndDateTime = tenancy.TenancyEnd,
