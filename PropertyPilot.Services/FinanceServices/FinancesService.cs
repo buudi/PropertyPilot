@@ -125,6 +125,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
             TenantId = tenantId,
             PropertyListingId = tenantCreateRequest.PropertyUnitId,
             SubUnitId = tenantCreateRequest.SubUnitId,
+            AssignedRent = tenantCreateRequest.AssignedRent,
             TenancyStart = createInvoiceRequest.DateStart,
             TenancyEnd = tenantCreateRequest.TenancyEnd,
             IsRenewable = tenantCreateRequest.IsInvoiceRenewable,

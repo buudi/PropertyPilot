@@ -12,6 +12,7 @@ public class Tenancy
     public Guid TenantId { get; set; } // FK to Tenant
     public Guid PropertyListingId { get; set; } // FK to PropertyUnit
     public Guid? SubUnitId { get; set; } // FK to SubUnit
+    public double AssignedRent { get; set; }
     public DateTime TenancyStart { get; set; }
     public DateTime? TenancyEnd { get; set; }
     public bool IsRenewable { get; set; } = false; // default value enforced in DB level
