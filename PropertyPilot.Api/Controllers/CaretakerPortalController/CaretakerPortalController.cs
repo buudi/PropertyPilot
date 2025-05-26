@@ -150,6 +150,56 @@ public class CaretakerPortalController(CaretakerPortalService caretakerPortalSer
     }
 
     /// <summary>
+    /// Get Tenancy Invoices Tab
+    /// </summary>
+    /// <param name="tenancyId"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="pageNumber"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/tenancies/{tenancyId:guid}/invoices")]
+    public async Task<IActionResult> GetTenancyInvoicesTabListing(
+        [FromRoute] Guid tenancyId,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageNumber = 1)
+    {
+        if (pageSize <= 0 || pageNumber <= 0)
+        {
+            return BadRequest("PageSize and PageNumber must be greater than zero.");
+        }
+
+        var result = await caretakerPortalService.GetTenancyInvoicesTabAsync(tenancyId, pageSize, pageNumber);
+
+        return Ok(result);
+
+    }
+
+    /// <summary>
+    /// Get Tenancy Invoices Tab
+    /// </summary>
+    /// <param name="tenancyId"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="pageNumber"></param>
+    /// <returns></returns>
+    [Authorize(Policy = AuthPolicies.CaretakerOnly)]
+    [HttpGet("properties/tenancies/{tenancyId:guid}/payments")]
+    public async Task<IActionResult> GetTenancyPaymentsTabListing(
+        [FromRoute] Guid tenancyId,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int pageNumber = 1)
+    {
+        if (pageSize <= 0 || pageNumber <= 0)
+        {
+            return BadRequest("PageSize and PageNumber must be greater than zero.");
+        }
+
+        var result = await caretakerPortalService.GetTenancyPaymentsTabAsync(tenancyId, pageSize, pageNumber);
+
+        return Ok(result);
+
+    }
+
+    /// <summary>
     /// Get Payments Tab Listing
     /// </summary>
     /// <param name="propertyId"></param>
