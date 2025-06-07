@@ -4,6 +4,7 @@ using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.HostedServices;
 using PropertyPilot.Services.JwtServices;
 using PropertyPilot.Services.LookupServices;
+using PropertyPilot.Services.MigrationServices;
 using PropertyPilot.Services.PropertiesServices;
 using PropertyPilot.Services.TenantServices;
 using PropertyPilot.Services.UserServices;
@@ -29,6 +30,7 @@ public static class ServiceRegistrationExtensions
         services.AddScoped<LookupService>();
         services.AddScoped<FinancesService>();
         services.AddScoped<CaretakerPortalService>();
+        services.AddScoped<MigrationService>();
 
         services.AddSingleton<IHostedService, InvoiceRenewHostedService>();
     }
