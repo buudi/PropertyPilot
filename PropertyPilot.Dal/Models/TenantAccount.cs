@@ -8,6 +8,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 /// Represents a tenant's account information.
 /// Corresponds to the "TenantAccount" table in the database.
 /// </summary>
+
+[Table(nameof(TenantAccount))]
 public class TenantAccount
 {
     /// <summary>

@@ -118,6 +118,61 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
         return Ok("Caretaker account created successfully");
     }
 
+    /// <summary>
+    /// tenant sign up
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    [HttpPost("signups/tenant")]
+    public IActionResult CreateTenantAccount([FromBody] TenantSignUpModel model)
+    {
+        if (pmsDbContext.TenantAccounts.Any(a => a.Email == model.Email))
+        {
+            return BadRequest("Tenant account with this email already exists");
+        }
+
+        using var transaction = pmsDbContext.Database.BeginTransaction();
+        try
+        {
+            var tenant = pmsDbContext.Tenants.FirstOrDefault(t => t.Email == model.Email);
+            if (tenant != null)
+            {
+                return BadRequest("Tenant with this email already exists");
+            }
+
+            tenant = new Tenant
+            {
+                Name = model.Name,
+                TenantIdentification = model.EmiratesId,
+                PhoneNumber = model.PhoneNumber,
+                Email = model.Email
+            };
+            pmsDbContext.Tenants.Add(tenant);
+            pmsDbContext.SaveChanges();
+
+            var tenantAccount = new TenantAccount
+            {
+                Email = model.Email,
+                HashedPassword = HashPassword(model.Password),
+                CreatedOn = DateTime.UtcNow,
+                IsArchived = false,
+                HasAccess = true,
+                LastLogin = DateTime.UtcNow,
+                TenantId = tenant.Id
+            };
+
+            pmsDbContext.TenantAccounts.Add(tenantAccount);
+            pmsDbContext.SaveChanges();
+
+            transaction.Commit();
+            return Created();
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginModel model)
     {
@@ -226,6 +281,16 @@ public class SignUpModel
     public string Email { get; set; }
     public string Password { get; set; }
 }
+
+public class TenantSignUpModel
+{
+    public string Email { get; set; }
+    public string Name { get; set; }
+    public string EmiratesId { get; set; }
+    public string PhoneNumber { get; set; }
+    public string Password { get; set; }
+}
+
 
 public class LoginModel
 {

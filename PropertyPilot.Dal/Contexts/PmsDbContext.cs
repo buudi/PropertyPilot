@@ -24,4 +24,5 @@ public class PmsDbContext(IConfiguration configuration) : DbContext
     public DbSet<RentPayment> RentPayments { get; set; }
     public DbSet<Expense> Expenses { get; set; }
     public DbSet<AssignedCaretakerProperty> AssignedCaretakerProperties { get; set; }
+    public DbSet<TenantAccount> TenantAccounts { get; set; }
 }
