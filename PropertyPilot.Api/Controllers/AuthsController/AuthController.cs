@@ -210,6 +210,47 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
         });
     }
 
+    /// <summary>
+    /// tenants login
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    [HttpPost("tenants/login")]
+    public IActionResult TenantLogin([FromBody] LoginModel model)
+    {
+        var tenantAccount = pmsDbContext.TenantAccounts.FirstOrDefault(a => a.Email == model.Email);
+
+        if (tenantAccount == null)
+        {
+            return Unauthorized("Tenant account not found.");
+        }
+
+        if (!VerifyPassword(model.Password, tenantAccount.HashedPassword))
+        {
+            return Unauthorized("Incorrect password.");
+        }
+
+        if (tenantAccount.IsArchived)
+        {
+            return Unauthorized("Tenant account is archived.");
+        }
+
+        var accessToken = jwtService.GenerateAccessToken(tenantAccount);
+        var refreshToken = jwtService.GenerateRefreshToken();
+
+        tenantAccount.RefreshToken = refreshToken;
+        tenantAccount.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        tenantAccount.LastLogin = DateTime.UtcNow;
+        pmsDbContext.SaveChanges();
+
+        return Ok(new
+        {
+            TenantAccount = tenantAccount,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
+        });
+    }
+
     [HttpPost("refresh-token")]
     public IActionResult RefreshToken([FromBody] RefreshTokenModel model)
     {
@@ -235,6 +276,37 @@ public class AuthController(PmsDbContext pmsDbContext, JwtService jwtService) : 
         var newRefreshToken = jwtService.GenerateRefreshToken();
 
         user.RefreshToken = newRefreshToken;
+        pmsDbContext.SaveChanges();
+
+        return Ok(new { AccessToken = newAccessToken, RefreshToken = newRefreshToken });
+    }
+
+    [HttpPost("tenants/refresh-token")]
+    public IActionResult TenantRefreshToken([FromBody] RefreshTokenModel model)
+    {
+        if (model is null)
+        {
+            return BadRequest("Invalid client request");
+        }
+
+        string accessToken = model.AccessToken;
+        string refreshToken = model.RefreshToken;
+
+        var principal = jwtService.GetPrincipalFromExpiredToken(accessToken);
+        var email = principal.FindFirstValue(ClaimTypes.Email);
+
+        var tenantAccount = pmsDbContext.TenantAccounts.SingleOrDefault(a => a.Email == email);
+
+        if (tenantAccount == null || tenantAccount.RefreshToken != refreshToken || tenantAccount.RefreshTokenExpiryTime <= DateTime.Now)
+        {
+            return BadRequest("Invalid client request");
+        }
+
+        var newAccessToken = jwtService.GenerateAccessToken(tenantAccount);
+        var newRefreshToken = jwtService.GenerateRefreshToken();
+
+        tenantAccount.RefreshToken = newRefreshToken;
+        tenantAccount.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
         pmsDbContext.SaveChanges();
 
         return Ok(new { AccessToken = newAccessToken, RefreshToken = newRefreshToken });

@@ -40,6 +40,29 @@ public class JwtService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    public string GenerateAccessToken(TenantAccount user)
+    {
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, "Tenant"),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email)
+            };
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(15), // Short-lived access token
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
     public string GenerateRefreshToken()
     {
         var randomNumber = new byte[64];
