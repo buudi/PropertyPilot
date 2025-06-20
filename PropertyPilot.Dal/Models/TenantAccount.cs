@@ -22,7 +22,7 @@ public class TenantAccount
     /// The ID of the tenant this account belongs to.
     /// This is a foreign key to the "Tenant" table.
     /// </summary>
-    public Guid TenantId { get; set; }
+    public Guid? TenantId { get; set; }
 
     /// <summary>
     /// The email address associated with the tenant account.
