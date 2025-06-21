@@ -16,6 +16,11 @@ public static class AuthPolicies
     public const string CaretakerOnly = "CaretakerOnly";
 
     /// <summary>
+    /// only Tenant Role
+    /// </summary>
+    public const string TenantOnly = "TenantOnly";
+
+    /// <summary>
     /// Both AdminManager and Manager Roles
     /// </summary>
     public const string ManagerAndAbove = "ManagerAndAbove";

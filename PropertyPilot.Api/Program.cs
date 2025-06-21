@@ -108,10 +108,13 @@ builder.Services.AddAuthorization(options =>
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager,
             PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Manager));
 
+    options.AddPolicy(AuthPolicies.TenantOnly, policy => policy.RequireRole("Tenant"));
+
     options.AddPolicy(AuthPolicies.AllRoles, policy => policy.RequireRole
             (PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.AdminManager,
             PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Manager,
-            PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Caretaker));
+            PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Caretaker,
+            "Tenant"));
 });
 
 
