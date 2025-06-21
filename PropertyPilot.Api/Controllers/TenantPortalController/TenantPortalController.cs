@@ -4,7 +4,7 @@ using PropertyPilot.Services.TenantPortalServices;
 
 namespace PropertyPilot.Api.Controllers.TenantPortalController;
 
-[Route("api/caretaker-portal")]
+[Route("api/tenants-portal")]
 [ApiController]
 public class TenantPortalController(TenantPortalService tenantPortalService) : ControllerBase
 {
