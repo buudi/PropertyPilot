@@ -23,4 +23,15 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
         return Ok(response);
     }
 
+    [HttpGet("tenancy/current")]
+    public async Task<IActionResult> GetCurrentActiveTenancy()
+    {
+        var tenantAccountId = HttpContext.GetUserId();
+        var tenancyInfo = await tenantPortalService.GetCurrentActiveTenancyInfo(tenantAccountId);
+
+        if (tenancyInfo == null)
+            return NotFound("No active tenancy found for this tenant.");
+
+        return Ok(tenancyInfo);
+    }
 }
