@@ -95,6 +95,25 @@ builder.Services.AddAuthentication(options =>
         NameClaimType = ClaimTypes.Email,
         ClockSkew = TimeSpan.Zero
     };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(new { error = "TokenExpired" });
+            return context.Response.WriteAsync(result);
+        },
+        OnChallenge = context =>
+        {
+
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(new { error = "TokenExpired" });
+            return context.Response.WriteAsync(result);
+        }
+    };
 });
 
 builder.Services.AddAuthorization(options =>

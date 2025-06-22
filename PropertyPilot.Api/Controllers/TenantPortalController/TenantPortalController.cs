@@ -11,14 +11,14 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
     [HttpGet("settings/basic-info")]
     public async Task<IActionResult> GetBasicInfo()
     {
-        var userId = HttpContext.GetUserId();
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
 
+        var userId = HttpContext.GetUserId();
         var response = await tenantPortalService.GetBasicTenantInfo(userId);
 
         if (response == null)
-        {
             return NotFound("Tenant Not Found");
-        }
 
         return Ok(response);
     }
@@ -26,6 +26,9 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
     [HttpGet("tenancy/current")]
     public async Task<IActionResult> GetCurrentActiveTenancy()
     {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
         var tenantAccountId = HttpContext.GetUserId();
         var tenancyInfo = await tenantPortalService.GetCurrentActiveTenancyInfo(tenantAccountId);
 
