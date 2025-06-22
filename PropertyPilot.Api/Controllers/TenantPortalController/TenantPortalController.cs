@@ -37,4 +37,19 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
 
         return Ok(tenancyInfo);
     }
+
+    [HttpGet("finances/outstanding-amount")]
+    public async Task<IActionResult> GetOutstandingAmount()
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        var response = await tenantPortalService.GetOutstandingAmount(tenantAccountId);
+
+        return Ok(new
+        {
+            OutstandingAmount = response
+        });
+    }
 }

@@ -3,21 +3,16 @@ using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Services.CaretakerPortalServices;
 using PropertyPilot.Services.CaretakerPortalServices.Models.Properties.TenantPage;
 using PropertyPilot.Services.Extensions;
+using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.TenantPortalServices.Models.Settings;
 
 namespace PropertyPilot.Services.TenantPortalServices;
 
-public class TenantPortalService
+public class TenantPortalService(
+    PmsDbContext pmsDbContext,
+    CaretakerPortalService caretakerPortalService,
+    FinancesService financesService)
 {
-    private readonly PmsDbContext pmsDbContext;
-    private readonly CaretakerPortalService caretakerPortalService;
-
-    public TenantPortalService(PmsDbContext pmsDbContext, CaretakerPortalService caretakerPortalService)
-    {
-        this.pmsDbContext = pmsDbContext;
-        this.caretakerPortalService = caretakerPortalService;
-    }
-
     public async Task<BasicTenantInfo?> GetBasicTenantInfo(Guid tenantAccountId)
     {
         var tenantAccount = await pmsDbContext
@@ -55,4 +50,17 @@ public class TenantPortalService
 
         return await caretakerPortalService.GetTenancyInformation(activeTenancy.Id);
     }
+
+    public async Task<double> GetOutstandingAmount(Guid tenantAccountId)
+    {
+        var tenantId = await pmsDbContext.TenantAccounts
+            .Where(x => x.Id == tenantAccountId)
+            .Select(x => x.TenantId)
+            .FirstOrDefaultAsync();
+
+        var tenantOutstanding = await financesService.IsTenantOutstanding((Guid)tenantId);
+
+        return tenantOutstanding.OutstandingAmount;
+    }
+
 }
