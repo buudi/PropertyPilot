@@ -52,4 +52,16 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
             OutstandingAmount = response
         });
     }
+
+    [HttpGet("payments")]
+    public async Task<IActionResult> GetAllPaymentsForTenant([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1)
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        var result = await tenantPortalService.GetAllPaymentsForTenantAsync(tenantAccountId, pageSize, pageNumber);
+
+        return Ok(result);
+    }
 }
