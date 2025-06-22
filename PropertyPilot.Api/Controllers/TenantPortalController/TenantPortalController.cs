@@ -64,4 +64,13 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
 
         return Ok(result);
     }
+
+    [HttpGet("invoices")]
+    public async Task<IActionResult> GetAllInvoicesForTenant([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1)
+    {
+        var tenantAccountId = HttpContext.GetUserId();
+        var result = await tenantPortalService.GetAllInvoicesForTenantAsync(tenantAccountId, pageSize, pageNumber);
+
+        return Ok(result);
+    }
 }
