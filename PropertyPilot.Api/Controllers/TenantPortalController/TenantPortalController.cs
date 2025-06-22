@@ -68,6 +68,9 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
     [HttpGet("invoices")]
     public async Task<IActionResult> GetAllInvoicesForTenant([FromQuery] int pageSize = 10, [FromQuery] int pageNumber = 1)
     {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
         var tenantAccountId = HttpContext.GetUserId();
         var result = await tenantPortalService.GetAllInvoicesForTenantAsync(tenantAccountId, pageSize, pageNumber);
 
