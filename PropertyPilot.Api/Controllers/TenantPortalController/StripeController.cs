@@ -79,11 +79,15 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
     [HttpPost("webhook")]
     public async Task<IActionResult> StripeWebhook()
     {
+        // Disable buffering to ensure we get the raw body
+        HttpContext.Request.EnableBuffering();
+
         // Read the raw request body as bytes, not string
         string json;
         using (var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true))
         {
             json = await reader.ReadToEndAsync();
+            HttpContext.Request.Body.Position = 0; // Reset position for potential re-reading
         }
 
         var stripeSignature = Request.Headers["Stripe-Signature"];
@@ -92,7 +96,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
         Event stripeEvent;
         try
         {
-            stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret);
+            stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret, throwOnApiVersionMismatch: false);
         }
         catch (StripeException ex)
         {
@@ -109,34 +113,85 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
 
         if (stripeEvent.Type == Events.CheckoutSessionCompleted)
         {
-            var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
-            var paymentSession = pmsDbContext.StripePaymentSessions.FirstOrDefault(x => x.StripeSessionId == session.Id);
-            if (paymentSession == null || paymentSession.Status == "Completed")
-                return Ok();
-
-            var invoiceIds = paymentSession.InvoiceIds.Split(',').Select(Guid.Parse).ToList();
-            foreach (var invoiceId in invoiceIds)
+            try
             {
-                var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
-                if (invoice == null) continue;
-
-                var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
-
-                var rentPaymentRequest = new RentPaymentRequest
+                var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
+                if (session == null)
                 {
-                    TenantId = invoice.TenantId,
-                    InvoiceId = invoice.Id,
-                    Amount = amount,
-                    PaymentMethod = RentPayment.PaymentMethods.StripePayment
-                };
+                    return BadRequest("Could not deserialize checkout session");
+                }
 
-                await financesService.RecordRentPayment(Guid.Empty, rentPaymentRequest);
+                // Log session ID for debugging
+                Console.WriteLine($"Processing session: {session.Id}");
+
+                var paymentSession = pmsDbContext.StripePaymentSessions.FirstOrDefault(x => x.StripeSessionId == session.Id);
+                if (paymentSession == null)
+                {
+                    Console.WriteLine($"Payment session not found for Stripe session: {session.Id}");
+                    return Ok(); // Not an error - might be a test webhook or duplicate
+                }
+
+                if (paymentSession.Status == "Completed")
+                {
+                    Console.WriteLine($"Payment session already completed: {session.Id}");
+                    return Ok();
+                }
+
+                Console.WriteLine($"Processing invoices: {paymentSession.InvoiceIds}");
+
+                // Check if InvoiceIds is null or empty
+                if (string.IsNullOrEmpty(paymentSession.InvoiceIds))
+                {
+                    Console.WriteLine("No invoice IDs found in payment session");
+                    return BadRequest("No invoice IDs found in payment session");
+                }
+
+                var invoiceIds = paymentSession.InvoiceIds.Split(',').Select(id =>
+                {
+                    if (Guid.TryParse(id.Trim(), out var guid))
+                        return guid;
+                    throw new FormatException($"Invalid GUID format: {id}");
+                }).ToList();
+
+                foreach (var invoiceId in invoiceIds)
+                {
+                    Console.WriteLine($"Processing invoice: {invoiceId}");
+
+                    var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
+                    if (invoice == null)
+                    {
+                        Console.WriteLine($"Invoice not found: {invoiceId}");
+                        continue;
+                    }
+
+                    var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+                    Console.WriteLine($"Invoice amount: {amount}");
+
+                    var rentPaymentRequest = new RentPaymentRequest
+                    {
+                        TenantId = invoice.TenantId,
+                        InvoiceId = invoice.Id,
+                        Amount = amount,
+                        PaymentMethod = RentPayment.PaymentMethods.StripePayment
+                    };
+
+                    await financesService.RecordRentPayment(Guid.Empty, rentPaymentRequest);
+                    Console.WriteLine($"Payment recorded for invoice: {invoiceId}");
+                }
+
+                paymentSession.Status = "Completed";
+                paymentSession.StripePaymentIntentId = session.PaymentIntentId;
+                paymentSession.CompletedAt = DateTime.UtcNow;
+                await pmsDbContext.SaveChangesAsync();
+
+                Console.WriteLine($"Payment session marked as completed: {session.Id}");
             }
-
-            paymentSession.Status = "Completed";
-            paymentSession.StripePaymentIntentId = session.PaymentIntentId;
-            paymentSession.CompletedAt = DateTime.UtcNow;
-            await pmsDbContext.SaveChangesAsync();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing webhook: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, $"Error processing webhook: {ex.Message}");
+            }
         }
 
         return Ok();
