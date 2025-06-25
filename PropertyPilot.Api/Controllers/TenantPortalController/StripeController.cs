@@ -7,6 +7,7 @@ using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.FinanceServices.Models;
 using Stripe;
 using Stripe.Checkout;
+using System.Text;
 
 [ApiController]
 [Route("api/stripe")]
@@ -78,7 +79,13 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
     [HttpPost("webhook")]
     public async Task<IActionResult> StripeWebhook()
     {
-        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        // Read the raw request body as bytes, not string
+        string json;
+        using (var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true))
+        {
+            json = await reader.ReadToEndAsync();
+        }
+
         var stripeSignature = Request.Headers["Stripe-Signature"];
         var endpointSecret = configuration["Stripe:WebhookSecret"];
 
@@ -87,9 +94,17 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
         {
             stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret);
         }
-        catch
+        catch (StripeException ex)
         {
-            return BadRequest();
+            // Log the specific error for debugging
+            // logger.LogError($"Stripe webhook signature verification failed: {ex.Message}");
+            return BadRequest($"Webhook signature verification failed: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            // Log general errors
+            // logger.LogError($"Webhook processing error: {ex.Message}");
+            return BadRequest($"Webhook error: {ex.Message}");
         }
 
         if (stripeEvent.Type == Events.CheckoutSessionCompleted)
