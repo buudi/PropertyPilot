@@ -25,4 +25,5 @@ public class PmsDbContext(IConfiguration configuration) : DbContext
     public DbSet<Expense> Expenses { get; set; }
     public DbSet<AssignedCaretakerProperty> AssignedCaretakerProperties { get; set; }
     public DbSet<TenantAccount> TenantAccounts { get; set; }
+    public DbSet<StripePaymentSession> StripePaymentSessions { get; set; }
 }
