@@ -11,8 +11,9 @@ using System.Text;
 
 [ApiController]
 [Route("api/stripe")]
-public class StripeController(PmsDbContext pmsDbContext, IConfiguration configuration, FinancesService financesService) : ControllerBase
+public class StripeController(PmsDbContext pmsDbContext, IConfiguration configuration, FinancesService financesService, ILogger<StripeController> logger) : ControllerBase
 {
+
     [HttpPost("tenant-invoice/create-checkout-session")]
     public async Task<IActionResult> CreateCheckoutSession([FromBody] List<Guid> invoiceIds)
     {
@@ -100,14 +101,12 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
         }
         catch (StripeException ex)
         {
-            // Log the specific error for debugging
-            // logger.LogError($"Stripe webhook signature verification failed: {ex.Message}");
+            logger.LogError($"Stripe webhook signature verification failed: {ex.Message}");
             return BadRequest($"Webhook signature verification failed: {ex.Message}");
         }
         catch (Exception ex)
         {
-            // Log general errors
-            // logger.LogError($"Webhook processing error: {ex.Message}");
+            logger.LogError($"Webhook processing error: {ex.Message}");
             return BadRequest($"Webhook error: {ex.Message}");
         }
 
@@ -121,28 +120,27 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                     return BadRequest("Could not deserialize checkout session");
                 }
 
-                // Log session ID for debugging
-                Console.WriteLine($"Processing session: {session.Id}");
+                logger.LogInformation("Processing session: {SessionId}", session.Id);
 
                 var paymentSession = pmsDbContext.StripePaymentSessions.FirstOrDefault(x => x.StripeSessionId == session.Id);
                 if (paymentSession == null)
                 {
-                    Console.WriteLine($"Payment session not found for Stripe session: {session.Id}");
+                    logger.LogWarning("Payment session not found for Stripe session: {SessionId}", session.Id);
                     return Ok(); // Not an error - might be a test webhook or duplicate
                 }
 
                 if (paymentSession.Status == "Completed")
                 {
-                    Console.WriteLine($"Payment session already completed: {session.Id}");
+                    logger.LogInformation("Payment session already completed: {SessionId}", session.Id);
                     return Ok();
                 }
 
-                Console.WriteLine($"Processing invoices: {paymentSession.InvoiceIds}");
+                logger.LogInformation("Processing invoices: {InvoiceIds}", paymentSession.InvoiceIds);
 
                 // Check if InvoiceIds is null or empty
                 if (string.IsNullOrEmpty(paymentSession.InvoiceIds))
                 {
-                    Console.WriteLine("No invoice IDs found in payment session");
+                    logger.LogWarning("No invoice IDs found in payment session");
                     return BadRequest("No invoice IDs found in payment session");
                 }
 
@@ -155,17 +153,17 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
 
                 foreach (var invoiceId in invoiceIds)
                 {
-                    Console.WriteLine($"Processing invoice: {invoiceId}");
+                    logger.LogInformation("Processing invoice: {InvoiceId}", invoiceId);
 
                     var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
                     if (invoice == null)
                     {
-                        Console.WriteLine($"Invoice not found: {invoiceId}");
+                        logger.LogWarning("Invoice not found: {InvoiceId}", invoiceId);
                         continue;
                     }
 
                     var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
-                    Console.WriteLine($"Invoice amount: {amount}");
+                    logger.LogInformation("Invoice amount: {Amount}", amount);
 
                     var rentPaymentRequest = new RentPaymentRequest
                     {
@@ -176,7 +174,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                     };
 
                     await financesService.RecordRentPayment(Guid.Empty, rentPaymentRequest);
-                    Console.WriteLine($"Payment recorded for invoice: {invoiceId}");
+                    logger.LogInformation("Payment recorded for invoice: {InvoiceId}", invoiceId);
                 }
 
                 paymentSession.Status = "Completed";
@@ -186,17 +184,17 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                 try
                 {
                     await pmsDbContext.SaveChangesAsync();
-                    Console.WriteLine($"Payment session marked as completed: {session.Id}");
+                    logger.LogInformation("Payment session marked as completed: {SessionId}", session.Id);
                 }
                 catch (Exception saveEx)
                 {
-                    Console.WriteLine($"Error saving payment session changes: {saveEx.Message}");
+                    logger.LogError(saveEx, "Error saving payment session changes: {Message}", saveEx.Message);
 
                     // Log inner exceptions
                     var innerEx = saveEx.InnerException;
                     while (innerEx != null)
                     {
-                        Console.WriteLine($"Save inner exception: {innerEx.Message}");
+                        logger.LogError("Save inner exception: {Message}", innerEx.Message);
                         innerEx = innerEx.InnerException;
                     }
                     throw; // Re-throw to be caught by outer catch block
@@ -204,17 +202,17 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error processing webhook: {ex.Message}");
+                logger.LogError(ex, "Error processing webhook: {Message}", ex.Message);
 
                 // Log inner exceptions for Entity Framework errors
                 var innerEx = ex.InnerException;
                 while (innerEx != null)
                 {
-                    Console.WriteLine($"Inner exception: {innerEx.Message}");
+                    logger.LogError("Inner exception: {Message}", innerEx.Message);
                     innerEx = innerEx.InnerException;
                 }
 
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
                 return StatusCode(500, $"Error processing webhook: {ex.Message}");
             }
         }
@@ -231,4 +229,6 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
             return NotFound("Payment session not found.");
         return Ok(paymentSession);
     }
+
+
 }
