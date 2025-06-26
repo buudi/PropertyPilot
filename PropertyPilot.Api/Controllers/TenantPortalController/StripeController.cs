@@ -182,13 +182,38 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                 paymentSession.Status = "Completed";
                 paymentSession.StripePaymentIntentId = session.PaymentIntentId;
                 paymentSession.CompletedAt = DateTime.UtcNow;
-                await pmsDbContext.SaveChangesAsync();
 
-                Console.WriteLine($"Payment session marked as completed: {session.Id}");
+                try
+                {
+                    await pmsDbContext.SaveChangesAsync();
+                    Console.WriteLine($"Payment session marked as completed: {session.Id}");
+                }
+                catch (Exception saveEx)
+                {
+                    Console.WriteLine($"Error saving payment session changes: {saveEx.Message}");
+
+                    // Log inner exceptions
+                    var innerEx = saveEx.InnerException;
+                    while (innerEx != null)
+                    {
+                        Console.WriteLine($"Save inner exception: {innerEx.Message}");
+                        innerEx = innerEx.InnerException;
+                    }
+                    throw; // Re-throw to be caught by outer catch block
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error processing webhook: {ex.Message}");
+
+                // Log inner exceptions for Entity Framework errors
+                var innerEx = ex.InnerException;
+                while (innerEx != null)
+                {
+                    Console.WriteLine($"Inner exception: {innerEx.Message}");
+                    innerEx = innerEx.InnerException;
+                }
+
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, $"Error processing webhook: {ex.Message}");
             }
