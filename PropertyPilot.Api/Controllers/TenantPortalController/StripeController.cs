@@ -242,6 +242,26 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
 
         Event stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret, throwOnApiVersionMismatch: false);
 
+        var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
+
+        if (stripeEvent.Type == Events.CheckoutSessionCompleted)
+        {
+            var paymentSession = pmsDbContext.StripePaymentSessions.FirstOrDefault(x => x.StripeSessionId == session.Id);
+
+            if (paymentSession.Status == "Completed")
+            {
+                return Ok(new { message = "Payment session already completed: {SessionId}", sessionId = session.Id });
+            }
+
+            paymentSession.Status = "Completed";
+            paymentSession.StripePaymentIntentId = session.PaymentIntentId;
+            paymentSession.CompletedAt = DateTime.UtcNow;
+
+            await pmsDbContext.SaveChangesAsync();
+
+            return Ok(new { message = "Payment Completed!", paymentSession });
+        }
+
 
         return Ok(new { message = "Webhook received successfully!", stripeEvent });
     }
