@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
@@ -218,6 +219,14 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
         }
 
         return Ok();
+    }
+
+    [HttpPost("webhook-test")]
+    [AllowAnonymous] // Ensure no auth is required
+    public IActionResult WebhookTest()
+    {
+        // Log or print something simple if you want
+        return Ok(new { message = "Webhook received successfully!" });
     }
 
     [HttpGet("payment-session/{sessionId}")]
