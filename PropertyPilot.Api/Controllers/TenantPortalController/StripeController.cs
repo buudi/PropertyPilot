@@ -261,23 +261,23 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                 throw new FormatException($"Invalid GUID format: {id}");
             }).ToList();
 
-            foreach (var invoiceId in invoiceIds)
-            {
-                var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
-                if (invoice == null)
-                {
-                    return NotFound($"Invoice not found: {invoiceId}");
-                }
-                var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
-                var rentPaymentRequest = new RentPaymentRequest
-                {
-                    TenantId = invoice.TenantId,
-                    InvoiceId = invoice.Id,
-                    Amount = amount,
-                    PaymentMethod = RentPayment.PaymentMethods.StripePayment
-                };
-                await financesService.RecordRentPayment(Guid.Empty, rentPaymentRequest);
-            }
+            //foreach (var invoiceId in invoiceIds)
+            //{
+            //    var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
+            //    if (invoice == null)
+            //    {
+            //        return NotFound($"Invoice not found: {invoiceId}");
+            //    }
+            //    var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+            //    var rentPaymentRequest = new RentPaymentRequest
+            //    {
+            //        TenantId = invoice.TenantId,
+            //        InvoiceId = invoice.Id,
+            //        Amount = amount,
+            //        PaymentMethod = RentPayment.PaymentMethods.StripePayment
+            //    };
+            //    await financesService.RecordRentPayment(Guid.Empty, rentPaymentRequest);
+            //}
 
             paymentSession.Status = "Completed";
             paymentSession.StripePaymentIntentId = session.PaymentIntentId;
@@ -285,7 +285,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
 
             await pmsDbContext.SaveChangesAsync();
 
-            return Ok(new { message = "Payment Completed!", paymentSession });
+            return Ok(new { message = "Payment Completed!", paymentSession, invoiceIds });
         }
 
 
