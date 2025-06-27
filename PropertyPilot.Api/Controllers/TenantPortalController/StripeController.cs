@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PropertyPilot.Dal.Contexts;
 using PropertyPilot.Dal.Models;
+using PropertyPilot.Services.Constants;
 using PropertyPilot.Services.Extensions;
 using PropertyPilot.Services.FinanceServices;
 using PropertyPilot.Services.FinanceServices.Models;
@@ -14,6 +15,8 @@ using System.Text;
 [Route("api/stripe")]
 public class StripeController(PmsDbContext pmsDbContext, IConfiguration configuration, FinancesService financesService, ILogger<StripeController> logger) : ControllerBase
 {
+
+    private readonly Guid _stripeUserAccountGuid = Keys.StripeUserAccountGuid;
 
     [HttpPost("tenant-invoice/create-checkout-session")]
     public async Task<IActionResult> CreateCheckoutSession([FromBody] List<Guid> invoiceIds)
@@ -261,23 +264,23 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                 throw new FormatException($"Invalid GUID format: {id}");
             }).ToList();
 
-            //foreach (var invoiceId in invoiceIds)
-            //{
-            //    var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
-            //    if (invoice == null)
-            //    {
-            //        return NotFound($"Invoice not found: {invoiceId}");
-            //    }
-            //    var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
-            //    var rentPaymentRequest = new RentPaymentRequest
-            //    {
-            //        TenantId = invoice.TenantId,
-            //        InvoiceId = invoice.Id,
-            //        Amount = amount,
-            //        PaymentMethod = RentPayment.PaymentMethods.StripePayment
-            //    };
-            //    await financesService.RecordRentPayment(Guid.Empty, rentPaymentRequest);
-            //}
+            foreach (var invoiceId in invoiceIds)
+            {
+                var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
+                if (invoice == null)
+                {
+                    return NotFound($"Invoice not found: {invoiceId}");
+                }
+                var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+                var rentPaymentRequest = new RentPaymentRequest
+                {
+                    TenantId = invoice.TenantId,
+                    InvoiceId = invoice.Id,
+                    Amount = amount,
+                    PaymentMethod = RentPayment.PaymentMethods.StripePayment
+                };
+                await financesService.RecordRentPayment(_stripeUserAccountGuid, rentPaymentRequest);
+            }
 
             paymentSession.Status = "Completed";
             paymentSession.StripePaymentIntentId = session.PaymentIntentId;
@@ -292,6 +295,29 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
         return Ok(new { message = "Webhook received successfully!", stripeEvent });
     }
 
+    [HttpPost("test-record-stripe-payments")]
+    public async Task<IActionResult> TestRecordStripePayments([FromBody] List<Guid> invoiceIds)
+    {
+        foreach (var invoiceId in invoiceIds)
+        {
+            var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
+            if (invoice == null)
+            {
+                return NotFound($"Invoice not found: {invoiceId}");
+            }
+            var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+            var rentPaymentRequest = new RentPaymentRequest
+            {
+                TenantId = invoice.TenantId,
+                InvoiceId = invoice.Id,
+                Amount = amount,
+                PaymentMethod = RentPayment.PaymentMethods.StripePayment
+            };
+            await financesService.RecordRentPayment(_stripeUserAccountGuid, rentPaymentRequest);
+        }
+        return Ok(new { message = "Test rent payments recorded for all invoices." });
+    }
+
     [HttpGet("payment-session/{sessionId}")]
     public async Task<IActionResult> GetPaymentSession(string sessionId)
     {
@@ -301,6 +327,4 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
             return NotFound("Payment session not found.");
         return Ok(paymentSession);
     }
-
-
 }
