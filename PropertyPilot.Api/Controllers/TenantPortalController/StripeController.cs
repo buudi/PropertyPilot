@@ -226,7 +226,8 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
     public IActionResult WebhookTest()
     {
         // Log or print something simple if you want
-        return Ok(new { message = "Webhook received successfully!" });
+        var stripeSignature = Request.Headers["Stripe-Signature"];
+        return Ok(new { message = "Webhook received successfully!", stripeSignature });
     }
 
     [HttpGet("payment-session/{sessionId}")]
