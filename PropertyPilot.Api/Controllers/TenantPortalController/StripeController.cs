@@ -253,6 +253,32 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                 return Ok(new { message = "Payment session already completed: {SessionId}", sessionId = session.Id });
             }
 
+
+            var invoiceIds = paymentSession.InvoiceIds.Split(',').Select(id =>
+            {
+                if (Guid.TryParse(id.Trim(), out var guid))
+                    return guid;
+                throw new FormatException($"Invalid GUID format: {id}");
+            }).ToList();
+
+            foreach (var invoiceId in invoiceIds)
+            {
+                var invoice = pmsDbContext.Invoices.FirstOrDefault(x => x.Id == invoiceId);
+                if (invoice == null)
+                {
+                    return NotFound($"Invoice not found: {invoiceId}");
+                }
+                var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+                var rentPaymentRequest = new RentPaymentRequest
+                {
+                    TenantId = invoice.TenantId,
+                    InvoiceId = invoice.Id,
+                    Amount = amount,
+                    PaymentMethod = RentPayment.PaymentMethods.StripePayment
+                };
+                await financesService.RecordRentPayment(Guid.Empty, rentPaymentRequest);
+            }
+
             paymentSession.Status = "Completed";
             paymentSession.StripePaymentIntentId = session.PaymentIntentId;
             paymentSession.CompletedAt = DateTime.UtcNow;
