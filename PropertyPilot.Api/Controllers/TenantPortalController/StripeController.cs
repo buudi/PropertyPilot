@@ -223,11 +223,27 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
 
     [HttpPost("webhook-test")]
     [AllowAnonymous] // Ensure no auth is required
-    public IActionResult WebhookTest()
+    public async Task<IActionResult> WebhookTest()
     {
         // Log or print something simple if you want
         var stripeSignature = Request.Headers["Stripe-Signature"];
-        return Ok(new { message = "Webhook received successfully!", stripeSignature });
+        var endpointSecret = configuration["Stripe:WebhookSecret"];
+
+        // Disable buffering to ensure we get the raw body
+        HttpContext.Request.EnableBuffering();
+
+        // Read the raw request body as bytes, not string
+        string json;
+        using (var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true))
+        {
+            json = await reader.ReadToEndAsync();
+            HttpContext.Request.Body.Position = 0; // Reset position for potential re-reading
+        }
+
+        Event stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret, throwOnApiVersionMismatch: false);
+
+
+        return Ok(new { message = "Webhook received successfully!", stripeEvent });
     }
 
     [HttpGet("payment-session/{sessionId}")]
