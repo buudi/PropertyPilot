@@ -13,6 +13,7 @@ public class PropertyPilotUser
         public static string AdminManager = nameof(AdminManager);
         public static string Manager = nameof(Manager);
         public static string Caretaker = nameof(Caretaker);
+        public static string Tenant = nameof(Tenant);
     }
 
     [Key]
