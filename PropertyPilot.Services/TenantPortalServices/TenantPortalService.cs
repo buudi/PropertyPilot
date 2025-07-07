@@ -218,4 +218,295 @@ public class TenantPortalService(PmsDbContext pmsDbContext, CaretakerPortalServi
             TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
         };
     }
+
+    public async Task<CaretakerDetailsDto?> GetCaretakerDetailsForTenant(Guid tenantAccountId)
+    {
+        // Find the tenant account
+        var tenantAccount = await pmsDbContext.TenantAccounts.FirstOrDefaultAsync(x => x.Id == tenantAccountId);
+        if (tenantAccount == null || tenantAccount.TenantId == null)
+            return null;
+
+        // Find the active tenancy
+        var activeTenancy = await pmsDbContext.Tenancies
+            .Where(x => x.TenantId == tenantAccount.TenantId && x.IsTenancyActive)
+            .OrderByDescending(x => x.TenancyStart)
+            .FirstOrDefaultAsync();
+        if (activeTenancy == null)
+            return null;
+
+        // Find the assigned caretaker for the property
+        var assignedCaretaker = await pmsDbContext.AssignedCaretakerProperties
+            .Where(x => x.PropertyListingId == activeTenancy.PropertyListingId)
+            .FirstOrDefaultAsync();
+        if (assignedCaretaker == null)
+            return null;
+
+        // Get caretaker user details
+        var caretaker = await pmsDbContext.PropertyPilotUsers
+            .Where(x => x.Id == assignedCaretaker.UserId && x.Role == PropertyPilot.Dal.Models.PropertyPilotUser.UserRoles.Caretaker)
+            .FirstOrDefaultAsync();
+        if (caretaker == null)
+            return null;
+
+        return new CaretakerDetailsDto
+        {
+            Id = caretaker.Id,
+            Name = caretaker.Name,
+            Email = caretaker.Email,
+            Role = caretaker.Role
+        };
+    }
+
+    public async Task<List<RecentActivityDto>> GetRecentActivityForTenant(Guid tenantAccountId, int limit = 10)
+    {
+        var tenantAccount = await pmsDbContext.TenantAccounts.FirstOrDefaultAsync(x => x.Id == tenantAccountId);
+        if (tenantAccount == null || tenantAccount.TenantId == null)
+            return new List<RecentActivityDto>();
+        var tenantId = tenantAccount.TenantId.Value;
+
+        var payments = await pmsDbContext.RentPayments
+            .Where(x => x.TenantId == tenantId)
+            .Select(x => new RecentActivityDto
+            {
+                Type = "payment",
+                Date = x.CreatedAt,
+                Title = "Rent Payment Received",
+                Amount = (decimal)x.Amount,
+                ReferenceId = x.Id
+            })
+            .ToListAsync();
+
+        var invoiceEntities = await pmsDbContext.Invoices
+        .Where(x => x.TenantId == tenantId)
+        .ToListAsync();
+
+        var invoices = new List<RecentActivityDto>();
+
+        foreach (var x in invoiceEntities)
+        {
+            var amount = await x.TotalAmountMinusDiscount(pmsDbContext);
+            invoices.Add(new RecentActivityDto
+            {
+                Type = "invoice",
+                Date = x.CreatedAt,
+                Title = "Invoice Issued",
+                Amount = (decimal)amount,
+                ReferenceId = x.Id
+            });
+        }
+
+
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(x => x.TenantId == tenantId)
+            .Select(x => new RecentActivityDto
+            {
+                Type = "lease",
+                Date = x.TenancyStart,
+                Title = "Lease Started",
+                Description = "Lease started for property.",
+                ReferenceId = x.Id
+            })
+            .ToListAsync();
+
+        // Optionally add lease end events
+        tenancies.AddRange(
+            (await pmsDbContext.Tenancies
+                .Where(x => x.TenantId == tenantId && x.TenancyEnd != null)
+                .Select(x => new RecentActivityDto
+                {
+                    Type = "lease",
+                    Date = x.TenancyEnd.Value,
+                    Title = "Lease Ended",
+                    Description = "Lease ended for property.",
+                    ReferenceId = x.Id
+                })
+                .ToListAsync())
+        );
+
+        var all = payments.Concat(invoices).Concat(tenancies)
+            .OrderByDescending(x => x.Date)
+            .Take(limit)
+            .ToList();
+        return all;
+    }
+
+    public async Task<PaginatedResult<RecentActivityDto>> GetPaginatedActivityForTenant(Guid tenantAccountId, int pageSize, int pageNumber)
+    {
+        var tenantAccount = await pmsDbContext.TenantAccounts.FirstOrDefaultAsync(x => x.Id == tenantAccountId);
+        if (tenantAccount == null || tenantAccount.TenantId == null)
+        {
+            return new PaginatedResult<RecentActivityDto>
+            {
+                Items = new List<RecentActivityDto>(),
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                TotalItems = 0,
+                TotalPages = 0
+            };
+        }
+        
+        var tenantId = tenantAccount.TenantId.Value;
+
+        var payments = await pmsDbContext.RentPayments
+            .Where(x => x.TenantId == tenantId)
+            .Select(x => new RecentActivityDto
+            {
+                Type = "payment",
+                Date = x.CreatedAt,
+                Title = "Rent Payment Received",
+                Amount = (decimal)x.Amount,
+                ReferenceId = x.Id
+            })
+            .ToListAsync();
+
+        var invoiceEntities = await pmsDbContext.Invoices
+            .Where(x => x.TenantId == tenantId)
+            .ToListAsync();
+
+        var invoices = new List<RecentActivityDto>();
+
+        foreach (var x in invoiceEntities)
+        {
+            var amount = await x.TotalAmountMinusDiscount(pmsDbContext);
+            invoices.Add(new RecentActivityDto
+            {
+                Type = "invoice",
+                Date = x.CreatedAt,
+                Title = "Invoice Issued",
+                Amount = (decimal)amount,
+                ReferenceId = x.Id
+            });
+        }
+
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(x => x.TenantId == tenantId)
+            .Select(x => new RecentActivityDto
+            {
+                Type = "lease",
+                Date = x.TenancyStart,
+                Title = "Lease Started",
+                Description = "Lease started for property.",
+                ReferenceId = x.Id
+            })
+            .ToListAsync();
+
+        // Optionally add lease end events
+        tenancies.AddRange(
+            (await pmsDbContext.Tenancies
+                .Where(x => x.TenantId == tenantId && x.TenancyEnd != null)
+                .Select(x => new RecentActivityDto
+                {
+                    Type = "lease",
+                    Date = x.TenancyEnd.Value,
+                    Title = "Lease Ended",
+                    Description = "Lease ended for property.",
+                    ReferenceId = x.Id
+                })
+                .ToListAsync())
+        );
+
+        var all = payments.Concat(invoices).Concat(tenancies)
+            .OrderByDescending(x => x.Date)
+            .ToList();
+
+        var totalItems = all.Count;
+        var paginatedItems = all
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new PaginatedResult<RecentActivityDto>
+        {
+            Items = paginatedItems,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalItems = totalItems,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
+        };
+    }
+
+    public async Task<TenantSettingsProfile?> GetTenantProfile(Guid tenantAccountId)
+    {
+        var tenantAccount = await pmsDbContext
+            .TenantAccounts
+            .Where(x => x.Id == tenantAccountId)
+            .FirstOrDefaultAsync();
+
+        if (tenantAccount == null || tenantAccount.TenantId == null)
+            return null;
+
+        var tenant = await pmsDbContext.Tenants
+            .Where(x => x.Id == tenantAccount.TenantId)
+            .FirstOrDefaultAsync();
+
+        if (tenant == null)
+            return null;
+
+        return new TenantSettingsProfile
+        {
+            Name = tenant.Name,
+            PhoneNumber = tenant.PhoneNumber,
+            Email = tenant.Email,
+            TenantIdentification = tenant.TenantIdentification
+        };
+    }
+
+    public async Task EditTenantProfile(Guid tenantAccountId, EditTenantProfile editTenantProfile)
+    {
+        var tenantAccount = await pmsDbContext
+            .TenantAccounts
+            .Where(x => x.Id == tenantAccountId)
+            .FirstOrDefaultAsync();
+
+        if (tenantAccount == null || tenantAccount.TenantId == null)
+            throw new InvalidOperationException("Tenant account not found");
+
+        var tenant = await pmsDbContext.Tenants
+            .Where(x => x.Id == tenantAccount.TenantId)
+            .FirstOrDefaultAsync();
+
+        if (tenant == null)
+            throw new InvalidOperationException("Tenant not found");
+
+        // Update tenant information
+        tenant.Name = editTenantProfile.Name;
+        tenant.PhoneNumber = editTenantProfile.PhoneNumber;
+        tenant.Email = editTenantProfile.Email;
+
+        // Update tenant account email if it's different
+        if (tenantAccount.Email != editTenantProfile.Email)
+        {
+            tenantAccount.Email = editTenantProfile.Email;
+        }
+
+        await pmsDbContext.SaveChangesAsync();
+    }
+
+    public async Task ChangeTenantPassword(Guid tenantAccountId, ChangeTenantPasswordRequest request)
+    {
+        var tenantAccount = await pmsDbContext.TenantAccounts.FirstOrDefaultAsync(x => x.Id == tenantAccountId);
+        if (tenantAccount == null)
+            throw new InvalidOperationException("Tenant account not found");
+
+        // Validate current password
+        if (!VerifyPassword(request.CurrentPassword, tenantAccount.HashedPassword))
+            throw new UnauthorizedAccessException("Current password is incorrect");
+
+        // Update password
+        tenantAccount.HashedPassword = HashPassword(request.NewPassword);
+        await pmsDbContext.SaveChangesAsync();
+    }
+
+    private static string HashPassword(string password)
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        var hashedBytes = System.Text.Encoding.UTF8.GetBytes(password);
+        var hash = sha256.ComputeHash(hashedBytes);
+        return BitConverter.ToString(hash).Replace("-", "").ToLower();
+    }
+
+    private static bool VerifyPassword(string password, string hashedPassword)
+    {
+        return HashPassword(password) == hashedPassword;
+    }
 }

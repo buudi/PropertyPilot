@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PropertyPilot.Api.Extensions;
 using PropertyPilot.Services.TenantPortalServices;
+using PropertyPilot.Services.TenantPortalServices.Models.Settings;
 
 namespace PropertyPilot.Api.Controllers.TenantPortalController;
 
@@ -75,5 +76,105 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
         var result = await tenantPortalService.GetAllInvoicesForTenantAsync(tenantAccountId, pageSize, pageNumber);
 
         return Ok(result);
+    }
+
+    [HttpGet("caretaker/details")]
+    public async Task<IActionResult> GetCaretakerDetails()
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        var caretaker = await tenantPortalService.GetCaretakerDetailsForTenant(tenantAccountId);
+
+        if (caretaker == null)
+            return NotFound("Caretaker not found for this tenant.");
+
+        return Ok(caretaker);
+    }
+
+    [HttpGet("activity/recent")]
+    public async Task<IActionResult> GetRecentActivity([FromQuery] int limit = 10)
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        var activity = await tenantPortalService.GetRecentActivityForTenant(tenantAccountId, limit);
+        return Ok(activity);
+    }
+
+    [HttpGet("activity/paginated")]
+    public async Task<IActionResult> GetPaginatedActivity([FromQuery] int pageSize = 30, [FromQuery] int pageNumber = 1)
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        var activity = await tenantPortalService.GetPaginatedActivityForTenant(tenantAccountId, pageSize, pageNumber);
+        return Ok(activity);
+    }
+
+    /// <summary>
+    /// Get the tenant's profile information
+    /// </summary>
+    /// <returns>Tenant profile information</returns>
+    [HttpGet("settings/profile")]
+    public async Task<IActionResult> GetTenantProfile()
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        var tenantProfile = await tenantPortalService.GetTenantProfile(tenantAccountId);
+
+        if (tenantProfile == null)
+            return NotFound("Tenant profile not found");
+
+        return Ok(tenantProfile);
+    }
+
+    /// <summary>
+    /// Edit the tenant's profile information
+    /// </summary>
+    /// <param name="editTenantProfile"></param>
+    /// <returns>Success response</returns>
+    [HttpPut("settings/profile")]
+    public async Task<IActionResult> EditTenantProfile([FromBody] EditTenantProfile editTenantProfile)
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        await tenantPortalService.EditTenantProfile(tenantAccountId, editTenantProfile);
+
+        return Ok(new { message = "Profile updated successfully" });
+    }
+
+    /// <summary>
+    /// Change the tenant's password
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns>Success response</returns>
+    [HttpPost("settings/change-password")]
+    public async Task<IActionResult> ChangeTenantPassword([FromBody] ChangeTenantPasswordRequest request)
+    {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Unauthorized(new { error = "Unauthorized" });
+
+        var tenantAccountId = HttpContext.GetUserId();
+        try
+        {
+            await tenantPortalService.ChangeTenantPassword(tenantAccountId, request);
+            return Ok(new { message = "Password changed successfully" });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 }
