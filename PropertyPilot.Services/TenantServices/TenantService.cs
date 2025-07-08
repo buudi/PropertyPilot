@@ -67,6 +67,26 @@ public class TenantService(PmsDbContext pmsDbContext, FinancesService invoicesSe
 
         var tenantId = tenant.Entity.Id;
 
+        // Create TenantAccount if not exists
+        var existingAccount = await pmsDbContext.TenantAccounts
+            .AnyAsync(a => a.Email == newTenant.Email);
+        if (!existingAccount)
+        {
+            var tenantAccount = new TenantAccount
+            {
+                Email = newTenant.Email,
+                HashedPassword = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+                CreatedOn = DateTime.UtcNow,
+                IsArchived = false,
+                HasAccess = true,
+                LastLogin = DateTime.UtcNow,
+                TenantId = tenantId
+            };
+            pmsDbContext.TenantAccounts.Add(tenantAccount);
+
+            await pmsDbContext.SaveChangesAsync();
+        }
+
         // create invoice for newly created tenant
         var createInvoice = new CreateInvoiceOnNewTenantRequest
         {

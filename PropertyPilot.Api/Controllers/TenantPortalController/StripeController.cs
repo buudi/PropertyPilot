@@ -34,7 +34,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
             {
                 PriceData = new SessionLineItemPriceDataOptions
                 {
-                    UnitAmount = (long)(amount * 100), // Stripe expects fils (1 AED = 100 fils)
+                    UnitAmount = (long)(amount * 100), // (1 AED = 100 fils)
                     Currency = "aed",
                     ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
@@ -51,7 +51,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
             CancelUrl = configuration["Stripe:CancelUrl"],
             LineItems = lineItems,
             Mode = "payment",
-            CustomerEmail = tenant?.Email, // Optional: set customer email
+            CustomerEmail = tenant?.Email,
             PaymentMethodTypes = new List<string> { "card" },
             Metadata = new Dictionary<string, string>
             {
@@ -93,7 +93,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
         using (var reader = new StreamReader(HttpContext.Request.Body, Encoding.UTF8, leaveOpen: true))
         {
             json = await reader.ReadToEndAsync();
-            HttpContext.Request.Body.Position = 0; // Reset position for potential re-reading
+            HttpContext.Request.Body.Position = 0; //reset position for potential re-reading
         }
 
         Event stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, endpointSecret, throwOnApiVersionMismatch: false);

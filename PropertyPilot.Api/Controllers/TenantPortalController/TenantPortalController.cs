@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PropertyPilot.Api.Extensions;
+using PropertyPilot.Dal.Contexts;
+using PropertyPilot.Dal.Models;
 using PropertyPilot.Services.TenantPortalServices;
 using PropertyPilot.Services.TenantPortalServices.Models.Settings;
 
@@ -7,7 +10,7 @@ namespace PropertyPilot.Api.Controllers.TenantPortalController;
 
 [Route("api/tenants-portal")]
 [ApiController]
-public class TenantPortalController(TenantPortalService tenantPortalService) : ControllerBase
+public class TenantPortalController(TenantPortalService tenantPortalService, PmsDbContext pmsDbContext) : ControllerBase
 {
     [HttpGet("settings/basic-info")]
     public async Task<IActionResult> GetBasicInfo()
@@ -176,5 +179,38 @@ public class TenantPortalController(TenantPortalService tenantPortalService) : C
         {
             return StatusCode(500, new { error = ex.Message });
         }
+    }
+
+    [HttpPost("accounts/create-for-tenant")]
+    public async Task<IActionResult> CreateTenantAccountForTenant([FromServices] PmsDbContext pmsDbContext, [FromBody] string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return BadRequest("Email is required.");
+
+        // Find the tenant by email
+        var tenant = await pmsDbContext.Tenants.FirstOrDefaultAsync(t => t.Email == email);
+        if (tenant == null)
+            return NotFound("Tenant not found.");
+
+        // Check if a TenantAccount already exists for this tenant
+        if (await pmsDbContext.TenantAccounts.AnyAsync(a => a.Email == email))
+            return BadRequest("Tenant account with this email already exists.");
+
+        // Create the TenantAccount
+        var tenantAccount = new TenantAccount
+        {
+            Email = email,
+            HashedPassword = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+            CreatedOn = DateTime.UtcNow,
+            IsArchived = false,
+            HasAccess = true,
+            LastLogin = DateTime.UtcNow,
+            TenantId = tenant.Id
+        };
+
+        pmsDbContext.TenantAccounts.Add(tenantAccount);
+        await pmsDbContext.SaveChangesAsync();
+
+        return Ok(new { message = "Tenant account created successfully." });
     }
 }
