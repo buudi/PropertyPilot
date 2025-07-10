@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using PropertyPilot.Dal.Contexts;
 using System.Net;
 using System.Text.Json;
 using Xunit;
+using FluentAssertions;
 
 namespace PropertyPilot.Tests.Integration.Controllers;
 
