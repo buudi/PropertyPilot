@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PropertyPilot.Api\PropertyPilot.Api.csproj" />
+    <ProjectReference Include="..\PropertyPilot.Dal\PropertyPilot.Dal.csproj" />
   </ItemGroup>
 
 </Project> 

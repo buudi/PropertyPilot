@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using PropertyPilot.Dal.Contexts;
+using PropertyPilot.Tests.TestUtilities;
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Xunit;
 using FluentAssertions;
@@ -29,23 +31,8 @@ public class AuthControllerIntegrationTests : IClassFixture<WebApplicationFactor
                     services.Remove(pmsDescriptor);
                 }
 
-                var ppDescriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<PpDbContext>));
-                if (ppDescriptor != null)
-                {
-                    services.Remove(ppDescriptor);
-                }
-
-                // Add in-memory databases for testing
-                services.AddDbContext<PmsDbContext>(options =>
-                {
-                    options.UseInMemoryDatabase("TestPmsDb");
-                });
-
-                services.AddDbContext<PpDbContext>(options =>
-                {
-                    options.UseInMemoryDatabase("TestPpDb");
-                });
+                // Add in-memory database for testing (only PmsDbContext)
+                services.AddDbContext<PmsDbContext, TestPmsDbContext>();
 
                 // Configure test JWT settings
                 services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
@@ -63,7 +50,7 @@ public class AuthControllerIntegrationTests : IClassFixture<WebApplicationFactor
     }
 
     [Fact]
-    public async Task HealthCheck_ShouldReturnOk()
+    public async Task HealthCheck_ShouldReturnUnauthorized()
     {
         // Act
         var response = await _client.GetAsync("/api/auth/me");
