@@ -49,8 +49,8 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - name: Run Integration Tests
-        run: dotnet test --configuration Release --no-build --verbosity normal
+      - name: Build and Run Integration Tests
+        run: dotnet test --configuration Release --verbosity normal
 
   deploy:
     runs-on: windows-latest
