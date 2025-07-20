@@ -2,6 +2,7 @@ using Xunit;
 
 namespace PropertyPilot.Tests.Integration;
 
+[Trait("Category", "Integration")]
 public class BasicIntegrationTest
 {
     [Fact]
@@ -9,10 +10,10 @@ public class BasicIntegrationTest
     {
         // Arrange
         var expected = true;
-
+        
         // Act
         var actual = true;
-
+        
         // Assert
         Assert.Equal(expected, actual);
     }
@@ -22,10 +23,10 @@ public class BasicIntegrationTest
     {
         // Arrange
         var expected = 42;
-
+        
         // Act
         var actual = 42;
-
+        
         // Assert
         Assert.Equal(expected, actual);
     }
@@ -35,10 +36,10 @@ public class BasicIntegrationTest
     {
         // Arrange
         var expected = "PropertyPilot";
-
+        
         // Act
         var actual = "PropertyPilot";
-
+        
         // Assert
         Assert.Equal(expected, actual);
     }

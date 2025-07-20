@@ -35,7 +35,24 @@ jobs:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
 
-  test:
+  unit-tests:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Build and Run Unit Tests
+        run: dotnet test --configuration Release --verbosity normal --filter "Category=Unit"
+
+  integration-tests:
     runs-on: windows-latest
     needs: build
     permissions:
@@ -50,11 +67,11 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Build and Run Integration Tests
-        run: dotnet test --configuration Release --verbosity normal
+        run: dotnet test --configuration Release --verbosity normal --filter "Category=Integration"
 
   deploy:
     runs-on: windows-latest
-    needs: [build, test]
+    needs: [build, unit-tests, integration-tests]
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
