@@ -29,7 +29,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
         var lineItems = new List<SessionLineItemOptions>();
         foreach (var inv in invoices)
         {
-            var amount = await inv.TotalAmountMinusDiscountAsync(pmsDbContext);
+            var amount = await inv.TotalAmountMinusDiscount(pmsDbContext);
             lineItems.Add(new SessionLineItemOptions
             {
                 PriceData = new SessionLineItemPriceDataOptions
@@ -124,7 +124,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
                 {
                     return NotFound($"Invoice not found: {invoiceId}");
                 }
-                var amount = await invoice.TotalAmountMinusDiscountAsync(pmsDbContext);
+                var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
                 var rentPaymentRequest = new RentPaymentRequest
                 {
                     TenantId = invoice.TenantId,
@@ -158,7 +158,7 @@ public class StripeController(PmsDbContext pmsDbContext, IConfiguration configur
             {
                 return NotFound($"Invoice not found: {invoiceId}");
             }
-            var amount = await invoice.TotalAmountMinusDiscountAsync(pmsDbContext);
+            var amount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
             var rentPaymentRequest = new RentPaymentRequest
             {
                 TenantId = invoice.TenantId,

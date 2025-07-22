@@ -25,22 +25,4 @@ public class Invoice
     public string InvoiceStatus { get; set; } = string.Empty;
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    public async Task<double> TotalAmountMinusDiscountAsync(PmsDbContext pmsDbContext)
-    {
-        var invoiceItems = await pmsDbContext.InvoiceItems.Where(item => item.InvoiceId == this.Id).ToListAsync();
-        var totalAmount = invoiceItems.Sum(item => item.Amount);
-        if (this.Discount.HasValue) totalAmount -= this.Discount.Value;
-        return totalAmount;
-    }
-
-    public async Task<double> TotalAmountRemainingAsync(PmsDbContext pmsDbContext)
-    {
-        var amount = await this.TotalAmountMinusDiscountAsync(pmsDbContext);
-        var sumPaid = await pmsDbContext.RentPayments
-            .Where(x => x.InvoiceId == this.Id)
-            .SumAsync(x => x.Amount);
-        var amountRemaining = amount - sumPaid;
-        return amountRemaining;
-    }
 }

@@ -79,7 +79,7 @@ public class LookupService(PmsDbContext pmsDbContext)
         foreach (var invoice in invoices)
         {
 
-            var amountRemaining = await invoice.TotalAmountRemainingAsync(pmsDbContext);
+            var amountRemaining = await invoice.TotalAmountRemaining(pmsDbContext);
 
             var lookup = new InvoiceLookup
             {
