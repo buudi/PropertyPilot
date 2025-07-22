@@ -16,14 +16,6 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
     private const double Tolerance = 1.0;
     private readonly Guid _mainMonetaryAccountGuid = Keys.MainMonetaryAccountGuid;
     private readonly Guid _stripeMonetaryAccountGuid = Keys.StripeMonetaryAccountGuid;
-    private readonly InvoiceDomainService _invoiceDomainService;
-
-    public FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService> logger)
-    {
-        this.pmsDbContext = pmsDbContext;
-        this.logger = logger;
-        _invoiceDomainService = new InvoiceDomainService(pmsDbContext);
-    }
 
     private async Task<bool> IsInvoicePaid(Invoice invoice)
     {
@@ -31,7 +23,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
             .Where(rentPayment => rentPayment.InvoiceId == invoice.Id)
             .SumAsync(rentPayment => rentPayment.Amount);
 
-        var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+        var invoiceTotalAmount = await invoice.TotalAmountMinusDiscountAsync(pmsDbContext);
 
         return rentPaymentsSum - Tolerance > invoiceTotalAmount;
     }
@@ -216,7 +208,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
                 PropertyUnitName = propertyListing?.PropertyName ?? "Unknown",
                 SubUnit = null, // todo: map Sub Unit when implementation is ready
                 InvoiceStatus = invoice.InvoiceStatus,
-                Amount = await invoice.TotalAmountMinusDiscount(pmsDbContext),
+                Amount = await invoice.TotalAmountMinusDiscountAsync(pmsDbContext),
                 IssuedDate = invoice.DateStart,
                 DueDate = invoice.DateDue
             });
@@ -284,7 +276,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
             .Where(rentPayment => rentPayment.InvoiceId == invoice.Id)
             .SumAsync(rentPayment => rentPayment.Amount);
 
-        var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+        var invoiceTotalAmount = await invoice.TotalAmountMinusDiscountAsync(pmsDbContext);
 
         if (rentPaymentsSum - Tolerance > invoiceTotalAmount)
         {
@@ -864,12 +856,13 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         var totalOutstandingAmount = 0.0;
         foreach (var invoice in outstandingInvoices)
         {
-            var invoiceTotalAmount = await _invoiceDomainService.GetTotalAmountMinusDiscountAsync(invoice);
+            var invoiceTotalAmount = await invoice.TotalAmountMinusDiscountAsync(pmsDbContext);
             totalOutstandingAmount += invoiceTotalAmount;
         }
 
         var isTenantOutstanding = new IsTenantOutstanding
         {
+
             IsOutstanding = outstandingInvoices.Count > 0,
             OutstandingAmount = totalOutstandingAmount
         };
@@ -887,7 +880,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         double totalOutstanding = 0.0;
         foreach (var invoice in invoices)
         {
-            totalOutstanding += await _invoiceDomainService.GetTotalAmountRemainingAsync(invoice);
+            totalOutstanding += await invoice.TotalAmountRemainingAsync(pmsDbContext);
         }
 
         return totalOutstanding;
@@ -946,7 +939,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         double totalOutstanding = 0.0;
         foreach (var invoice in invoices)
         {
-            totalOutstanding += await _invoiceDomainService.GetTotalAmountRemainingAsync(invoice);
+            totalOutstanding += await invoice.TotalAmountRemainingAsync(pmsDbContext);
         }
 
         return totalOutstanding;
