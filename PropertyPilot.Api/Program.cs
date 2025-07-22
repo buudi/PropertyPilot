@@ -8,6 +8,7 @@ using PropertyPilot.Dal.Contexts;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,7 +97,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+var stopwatch = Stopwatch.StartNew();
 app.Run();
+stopwatch.Stop();
+Console.WriteLine($"[Startup Timing] Application startup completed in {stopwatch.ElapsedMilliseconds} ms");
 
 // Make Program class public for integration tests
 public partial class Program { }
