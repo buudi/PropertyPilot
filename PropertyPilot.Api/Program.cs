@@ -12,66 +12,12 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "PropertyPilot API", Version = "v1" });
-
-    // Set the comments path for the Swagger JSON and UI.
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
-
-    // Configure Swagger to use JWT Authentication
-    var securityScheme = new OpenApiSecurityScheme
-    {
-        Name = "JWT Authentication",
-        Description = "Enter JWT Bearer token **_only_**",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        Reference = new OpenApiReference
-        {
-            Id = JwtBearerDefaults.AuthenticationScheme,
-            Type = ReferenceType.SecurityScheme
-        }
-    };
-    c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        //{securityScheme, new string[] { }}
-        { securityScheme, new[] { "Bearer" } }
-    });
-});
+// Use extension method for Swagger
+builder.Services.AddSwaggerDocumentation();
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-
-// temporarily allow all origins
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(name: "_myAllowSpecificOrigins", policy =>
-    {
-        policy.AllowAnyOrigin()
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
-});
-
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy(name: "_myAllowSpecificOrigins", policy =>
-//    {
-//        policy.WithOrigins("http://localhost:5173")
-//            .AllowAnyHeader()
-//            .AllowAnyMethod();
-
-//        policy.WithOrigins("http://localhost:5174")
-//            .AllowAnyHeader()
-//            .AllowAnyMethod();
-//    });
-//});
+// Use extension method for CORS
+builder.Services.AddDefaultCors(MyAllowSpecificOrigins);
 
 builder.Services.AddDbContext<PmsDbContext>();
 builder.Services.AddDbContext<PpDbContext>();
