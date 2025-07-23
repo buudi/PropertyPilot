@@ -16,14 +16,6 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
     private const double Tolerance = 1.0;
     private readonly Guid _mainMonetaryAccountGuid = Keys.MainMonetaryAccountGuid;
     private readonly Guid _stripeMonetaryAccountGuid = Keys.StripeMonetaryAccountGuid;
-    private readonly InvoiceDomainService _invoiceDomainService;
-
-    public FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService> logger)
-    {
-        this.pmsDbContext = pmsDbContext;
-        this.logger = logger;
-        _invoiceDomainService = new InvoiceDomainService(pmsDbContext);
-    }
 
     private async Task<bool> IsInvoicePaid(Invoice invoice)
     {
@@ -115,6 +107,189 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         return listing;
     }
 
+    public async Task<Invoice?> GetInvoiceByIdAsync(Guid invoiceId)
+    {
+        var invoice = await pmsDbContext
+            .Invoices
+            .Where(x => x.Id == invoiceId)
+            .FirstOrDefaultAsync();
+
+        return invoice ?? null;
+    }
+
+    public async Task<InvoiceRecord> CreateTenancyAndInvoiceOnTenantCreate(Guid tenantId, TenantCreateRequest tenantCreateRequest, CreateInvoiceOnNewTenantRequest createInvoiceRequest)
+    {
+
+        var tenancyObject = new Tenancy
+        {
+            TenantId = tenantId,
+            PropertyListingId = tenantCreateRequest.PropertyUnitId,
+            SubUnitId = tenantCreateRequest.SubUnitId,
+            AssignedRent = tenantCreateRequest.AssignedRent,
+            TenancyStart = createInvoiceRequest.DateStart,
+            TenancyEnd = tenantCreateRequest.TenancyEnd,
+            IsRenewable = tenantCreateRequest.IsInvoiceRenewable,
+            RenewalPeriodInDays = tenantCreateRequest.RenewalPeriodInDays,
+            IsTenancyActive = true
+        };
+
+        var tenancy = pmsDbContext.Tenancies.Add(tenancyObject);
+        await pmsDbContext.SaveChangesAsync();
+
+        var tenancyId = tenancy.Entity.Id;
+
+        var invoiceObject = new Invoice
+        {
+            TenancyId = tenancyId,
+            Discount = createInvoiceRequest.Discount,
+            TenantId = tenantId,
+            DateStart = createInvoiceRequest.DateStart,
+            DateDue = createInvoiceRequest.DateDue,
+            InvoiceStatus = createInvoiceRequest.InvoiceStatus,
+        };
+
+        // create invoice and return invoice id
+        var invoice = pmsDbContext
+            .Invoices
+            .Add(invoiceObject);
+
+        await pmsDbContext.SaveChangesAsync();
+
+        var invoiceId = invoice.Entity.Id;
+
+        // create invoice item
+        var invoiceItemObject = new InvoiceItem
+        {
+            Description = "New Tenancy Rent",
+            Amount = createInvoiceRequest.RentAmount,
+            InvoiceId = invoiceId
+        };
+
+        pmsDbContext.InvoiceItems.Add(invoiceItemObject);
+        await pmsDbContext.SaveChangesAsync();
+
+        // return invoice record
+        var invoiceRecord = await invoice.Entity.AsInvoiceListingRecord(pmsDbContext);
+
+        return invoiceRecord;
+    }
+
+    public async Task<PaginatedResult<InvoiceListingItem>> GetAllInvoicesListingItems(int pageSize, int pageNumber,
+        DateTime invoiceCreateDateFrom, DateTime invoiceCreateDateTill)
+    {
+        var query = pmsDbContext.Invoices.Where(invoice =>
+            invoice.CreatedAt >= invoiceCreateDateFrom && invoice.CreatedAt <= invoiceCreateDateTill);
+
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var invoices = await query.OrderBy(invoice => invoice.DateStart)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var invoiceListingItems = new List<InvoiceListingItem>();
+
+        foreach (var invoice in invoices)
+        {
+            var invoiceRecord = await invoice.AsInvoiceListingRecord(pmsDbContext);
+
+            var tenancy = await pmsDbContext.Tenancies.FirstOrDefaultAsync(t => t.Id == invoice.TenancyId);
+
+            var propertyListing =
+                await pmsDbContext.PropertyListings.FirstOrDefaultAsync(p => p.Id == tenancy!.PropertyListingId);
+
+            var tenant = await pmsDbContext.Tenants.FirstOrDefaultAsync(t => t.Id == invoice.TenantId);
+
+            invoiceListingItems.Add(new InvoiceListingItem
+            {
+                Id = invoice.Id,
+                TenantName = tenant?.Name ?? "Unknown",
+                PropertyUnitName = propertyListing?.PropertyName ?? "Unknown",
+                SubUnit = null, // todo: map Sub Unit when implementation is ready
+                InvoiceStatus = invoice.InvoiceStatus,
+                Amount = await invoice.TotalAmountMinusDiscount(pmsDbContext),
+                IssuedDate = invoice.DateStart,
+                DueDate = invoice.DateDue
+            });
+        }
+
+        return new PaginatedResult<InvoiceListingItem>
+        {
+            Items = invoiceListingItems,
+            TotalItems = totalItems,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
+    }
+
+    public async Task<PaginatedResult<MonetaryAccount>> GetAllMonetaryAccountsListingItems(int pageSize, int pageNumber)
+    {
+        var query = pmsDbContext.MonetaryAccounts;
+
+        var totalItems = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+        var monetaryAccounts = await query.OrderBy(account => account.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<MonetaryAccount>
+        {
+            Items = monetaryAccounts,
+            TotalItems = totalItems,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = totalPages
+        };
+    }
+
+    public async Task CreateMainMonetaryAccount()
+    {
+        // check if main account exists
+        var mainAccountExists = await pmsDbContext.MonetaryAccounts.AnyAsync(account => account.AccountName == "Main");
+
+        if (!mainAccountExists)
+        {
+            var mainAccount = new MonetaryAccount { AccountName = "Main" };
+
+            pmsDbContext.MonetaryAccounts.Add(mainAccount);
+            await pmsDbContext.SaveChangesAsync();
+        }
+    }
+
+    public async Task UpdateInvoiceStatus(Guid invoiceId)
+    {
+        var invoice = await pmsDbContext
+            .Invoices
+            .Where(invoice => invoice.Id == invoiceId)
+            .FirstOrDefaultAsync();
+
+        if (invoice == null)
+        {
+            return;
+        }
+
+        var rentPaymentsSum = await pmsDbContext.RentPayments
+            .Where(rentPayment => rentPayment.InvoiceId == invoice.Id)
+            .SumAsync(rentPayment => rentPayment.Amount);
+
+        var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
+
+        if (rentPaymentsSum - Tolerance > invoiceTotalAmount)
+        {
+            throw new InvalidOperationException("Invoice already been completely paid.");
+        }
+
+        invoice.InvoiceStatus = Math.Abs(rentPaymentsSum - invoiceTotalAmount) < Tolerance
+            ? Invoice.InvoiceStatuses.Paid
+            : Invoice.InvoiceStatuses.Outstanding;
+
+        await pmsDbContext.SaveChangesAsync();
+    }
+
     public async Task<AttemptResult<RentPaymentTransactionRecord>> RecordRentPayment(Guid userId, RentPaymentRequest request)
     {
         var invoice = await pmsDbContext
@@ -185,7 +360,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
                 return new AttemptResult<RentPaymentTransactionRecord>(updateBalanceAttempt.ErrorCode, updateBalanceAttempt.ErrorMessage);
             }
 
-            await _invoiceDomainService.UpdateInvoiceStatusAsync(request.InvoiceId);
+            await UpdateInvoiceStatus(request.InvoiceId);
 
             await dbTransaction.CommitAsync();
 
@@ -262,6 +437,35 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         var record = await rentPayment.AsRentPaymentRecord(pmsDbContext);
 
         return record;
+    }
+
+    public async Task<PaginatedResult<TransactionListingRecord>> GetTransactionsListingsAsync(int pageNumber, int pageSize)
+    {
+        var query = pmsDbContext.Transactions;
+        var transactions = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var totalItems = await query.CountAsync();
+
+        var transactionListings = new List<TransactionListingRecord>();
+
+        foreach (var transaction in transactions)
+        {
+            var transactionListing = await CreateTransactionListingRecordAsync(transaction);
+            transactionListings.Add(transactionListing);
+        }
+
+        return new PaginatedResult<TransactionListingRecord>
+        {
+            Items = transactionListings,
+            TotalItems = totalItems,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+        };
     }
 
     public async Task<AttemptResult<ExpenseTransactionRecord>> RecordExpenseAsync(CreateExpenseRequest createExpenseRequest)
@@ -353,6 +557,292 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
 
     }
 
+    public async Task<InvoiceRecord> CreateInvoiceRecord(CreateInvoiceRequest createInvoiceRequest)
+    {
+        var invoiceObject = new Invoice
+        {
+            TenancyId = createInvoiceRequest.TenancyId,
+            Discount = createInvoiceRequest.Discount,
+            TenantId = createInvoiceRequest.TenantId,
+            DateStart = DateTime.UtcNow,
+            DateDue = createInvoiceRequest.DateDue,
+            InvoiceStatus = Invoice.InvoiceStatuses.Pending
+        };
+
+        var invoice = pmsDbContext
+            .Invoices
+            .Add(invoiceObject);
+        await pmsDbContext.SaveChangesAsync();
+        var invoiceId = invoice.Entity.Id;
+
+        foreach (var item in createInvoiceRequest.InvoiceItems)
+        {
+            var invoiceItemObject = new InvoiceItem
+            {
+                Description = item.Description,
+                Amount = item.Amount,
+                InvoiceId = invoiceId
+            };
+            pmsDbContext.InvoiceItems.Add(invoiceItemObject);
+        }
+
+        await pmsDbContext.SaveChangesAsync();
+
+        var invoiceRecord = await invoice.Entity.AsInvoiceListingRecord(pmsDbContext);
+
+        return invoiceRecord;
+
+    }
+
+    public async Task RenewInvoiceScheduledJob()
+    {
+        logger.LogInformation("RenewInvoiceScheduledJob was called at {Time}", DateTime.UtcNow);
+
+        var tenancies = await pmsDbContext.Tenancies
+            .Where(x => x.IsRenewable && x.RenewalPeriodInDays.HasValue)
+            .ToListAsync();
+
+        foreach (var tenancy in tenancies)
+        {
+            var lastInvoice = await pmsDbContext.Invoices
+                .Where(x => x.TenancyId == tenancy.Id)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (lastInvoice == null)
+                continue;
+
+            int renewalDays = tenancy.RenewalPeriodInDays!.Value;
+
+            DateTime nextDateStart;
+            if (renewalDays == 30)
+            {
+                nextDateStart = lastInvoice.DateStart.AddMonths(1);
+            }
+            else if (lastInvoice.DateStart.Day == 1)
+            {
+                int daysInMonth = DateTime.DaysInMonth(lastInvoice.DateStart.Year, lastInvoice.DateStart.Month);
+                nextDateStart = renewalDays == daysInMonth
+                    ? lastInvoice.DateStart.AddMonths(1)
+                    : lastInvoice.DateStart.AddDays(renewalDays);
+            }
+            else
+            {
+                nextDateStart = lastInvoice.DateStart.AddDays(renewalDays);
+            }
+
+            nextDateStart = DateTime.SpecifyKind(nextDateStart, DateTimeKind.Utc);
+
+            if (DateTime.UtcNow < nextDateStart)
+                continue;
+
+            var newInvoice = new Invoice
+            {
+                TenancyId = tenancy.Id,
+                TenantId = tenancy.TenantId,
+                DateStart = nextDateStart,
+                InvoiceStatus = Invoice.InvoiceStatuses.Pending,
+                Notes = "Auto-generated based on tenancy rent",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            pmsDbContext.Invoices.Add(newInvoice);
+            await pmsDbContext.SaveChangesAsync();
+
+            pmsDbContext.InvoiceItems.Add(new InvoiceItem
+            {
+                Description = "Rent",
+                Amount = tenancy.AssignedRent,
+                InvoiceId = newInvoice.Id,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await pmsDbContext.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Processed {Count} tenancies", tenancies.Count);
+    }
+
+    //public async Task RenewInvoiceScheduledJob()
+    //{
+    //    logger.LogInformation("RenewInvoiceScheduledJob was called at {Time}", DateTime.UtcNow);
+    //    var tenancies = await pmsDbContext
+    //        .Tenancies
+    //        .Where(x => x.IsRenewable)
+    //        .ToListAsync();
+
+    //    foreach (var tenancy in tenancies)
+    //    {
+    //        var invoice = await pmsDbContext
+    //            .Invoices
+    //            .Where(x => x.TenancyId == tenancy.Id)
+    //            .OrderByDescending(x => x.CreatedAt)
+    //            .FirstOrDefaultAsync();
+
+    //        if (invoice == null) continue;
+
+    //        DateTime nextDateStart;
+    //        int renewalDays = (int)tenancy.RenewalPeriodInDays!;
+
+    //        // Calculate next renewal date
+    //        if (renewalDays == 30)
+    //        {
+    //            // Same day next month (handles end-of-month automatically)
+    //            nextDateStart = invoice.DateStart.AddMonths(1);
+    //        }
+    //        else if (invoice.DateStart.Day == 1)
+    //        {
+    //            // First-of-month logic
+    //            int daysInMonth = DateTime.DaysInMonth(invoice.DateStart.Year, invoice.DateStart.Month);
+    //            nextDateStart = renewalDays == daysInMonth
+    //                ? invoice.DateStart.AddMonths(1)
+    //                : invoice.DateStart.AddDays(renewalDays);
+    //        }
+    //        else
+    //        {
+    //            // Regular daily renewal
+    //            nextDateStart = invoice.DateStart.AddDays(renewalDays);
+    //        }
+
+    //        // Ensure UTC datetime
+    //        nextDateStart = DateTime.SpecifyKind(nextDateStart, DateTimeKind.Utc);
+
+    //        if (DateTime.UtcNow >= nextDateStart)
+    //        {
+    //            // Create new invoice
+    //            var invoiceItems = await pmsDbContext
+    //                .InvoiceItems
+    //                .Where(x => x.InvoiceId == invoice.Id)
+    //                .ToListAsync();
+
+    //            var newInvoice = new Invoice
+    //            {
+    //                TenancyId = tenancy.Id,
+    //                TenantId = tenancy.TenantId,
+    //                DateStart = nextDateStart,
+    //                InvoiceStatus = Invoice.InvoiceStatuses.Pending,
+    //                Notes = invoice.Notes,
+    //                CreatedAt = DateTime.UtcNow,    
+    //            };
+
+    //            pmsDbContext.Invoices.Add(newInvoice);
+    //            await pmsDbContext.SaveChangesAsync();  // Save to get new invoice ID
+
+    //            // Copy invoice items
+    //            foreach (var invoiceItem in invoiceItems)
+    //            {
+    //                pmsDbContext.InvoiceItems.Add(new InvoiceItem
+    //                {
+    //                    Description = invoiceItem.Description,
+    //                    Amount = invoiceItem.Amount,
+    //                    InvoiceId = newInvoice.Id,
+    //                    CreatedAt = DateTime.UtcNow
+    //                });
+    //            }
+    //            await pmsDbContext.SaveChangesAsync();
+    //        }
+    //    }
+
+    //    logger.LogInformation("Processed {Count} tenancies", tenancies.Count);
+    //}
+
+    public async Task<PropertyListing?> GetPropertyListingFromRentPayment(Guid rentPaymentId)
+    {
+
+        var rentPayment = await pmsDbContext
+            .RentPayments
+            .Where(x => x.Id == rentPaymentId)
+            .FirstOrDefaultAsync();
+
+        if (rentPayment == null)
+        {
+            return null;
+        }
+
+        var invoice = await pmsDbContext
+        .Invoices
+        .Where(x => x.Id == rentPayment.InvoiceId)
+        .FirstOrDefaultAsync();
+
+        if (invoice == null)
+        {
+            return null;
+        }
+
+        var tenancy = await pmsDbContext
+            .Tenancies
+            .Where(x => x.Id == invoice.TenancyId)
+            .FirstOrDefaultAsync();
+
+        if (tenancy == null)
+        {
+            return null;
+        }
+
+        var propertyListing = await pmsDbContext
+        .PropertyListings
+        .Where(x => x.Id == tenancy.PropertyListingId)
+        .FirstOrDefaultAsync();
+
+        if (propertyListing == null)
+        {
+            return null;
+        }
+
+        return propertyListing;
+    }
+
+    public async Task<Tenant?> GetTenantFromRentPayment(Guid rentPaymentId)
+    {
+        var rentPayment = await pmsDbContext
+            .RentPayments
+            .Where(x => x.Id == rentPaymentId)
+            .FirstOrDefaultAsync();
+
+        if (rentPayment == null)
+        {
+            return null;
+        }
+
+        var tenant = await pmsDbContext
+            .Tenants
+            .Where(x => x.Id == rentPayment.TenantId)
+            .FirstOrDefaultAsync();
+
+        if (tenant == null)
+        {
+            return null;
+        }
+
+        return tenant;
+    }
+
+    public async Task<PropertyListing?> GetPropertyLisitngFromExpense(Guid expenseId)
+    {
+
+        var expense = await pmsDbContext
+            .Expenses
+            .Where(x => x.Id == expenseId)
+            .FirstOrDefaultAsync();
+
+        if (expense == null)
+        {
+            return null;
+        }
+
+        var propertyListing = await pmsDbContext
+            .PropertyListings
+            .Where(x => x.Id == expense.PropertyListingId)
+            .FirstOrDefaultAsync();
+
+        if (propertyListing == null)
+        {
+            return null;
+        }
+
+        return propertyListing;
+    }
+
     public async Task<IsTenantOutstanding> IsTenantOutstanding(Guid tenantId)
     {
         var invoices = await pmsDbContext.Invoices
@@ -366,12 +856,13 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         var totalOutstandingAmount = 0.0;
         foreach (var invoice in outstandingInvoices)
         {
-            var invoiceTotalAmount = await _invoiceDomainService.GetTotalAmountMinusDiscountAsync(invoice);
+            var invoiceTotalAmount = await invoice.TotalAmountMinusDiscount(pmsDbContext);
             totalOutstandingAmount += invoiceTotalAmount;
         }
 
         var isTenantOutstanding = new IsTenantOutstanding
         {
+
             IsOutstanding = outstandingInvoices.Count > 0,
             OutstandingAmount = totalOutstandingAmount
         };
@@ -389,7 +880,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         double totalOutstanding = 0.0;
         foreach (var invoice in invoices)
         {
-            totalOutstanding += await _invoiceDomainService.GetTotalAmountRemainingAsync(invoice);
+            totalOutstanding += await invoice.TotalAmountRemaining(pmsDbContext);
         }
 
         return totalOutstanding;
@@ -448,7 +939,7 @@ public class FinancesService(PmsDbContext pmsDbContext, ILogger<FinancesService>
         double totalOutstanding = 0.0;
         foreach (var invoice in invoices)
         {
-            totalOutstanding += await _invoiceDomainService.GetTotalAmountRemainingAsync(invoice);
+            totalOutstanding += await invoice.TotalAmountRemaining(pmsDbContext);
         }
 
         return totalOutstanding;
